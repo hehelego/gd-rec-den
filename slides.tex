@@ -1,0 +1,129 @@
+\documentclass{beamer}
+\usetheme{Berlin}
+\usecolortheme{seahorse}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumerate}
+
+\title{guarded recursion-based denotational sematics}
+\subtitle{featuring misleading analogs and suspicious agda code}
+\author{Charles Peng\and Yvan Dong}
+\date{\today}
+\institute{Institute: N/A}
+
+\begin{document}
+
+\maketitle
+
+\section{overview}
+\begin{frame}{overview}
+	\begin{itemize}
+		\item denotational semantics
+			\begin{itemize}
+				\item what is this all about: a quick demonstration of "denotational semantics of propositional logic". (examples ...)
+				\item set-theoretical model of STLC.
+				\item the general approach and difficulties of scaling to full-fledged PL.
+			\end{itemize}
+		\item guarded type theory:
+			\begin{itemize}
+				\item
+					\(F(X) = 1 + A * X\)
+					\(F(X) = A * X\)
+				\item coinductive fixed point examples:
+					intutiively make sense, have corresponding infinite structures e.g. stream/deterministic automata run/NFA omega run ...
+					we can come up with the proof rules for those fixed point.
+					2 DFA runs => synchronous parallel execution, intersection. (think twice ...)
+					% L A [iso] A + L A
+				\item guarded recursion: generalize to fixed point of whatever functor.
+					% gfix f = f (next (gfix f))
+					% later modality, next ...
+
+					% lob : (later A -> A) -> A
+					% next : A -> later A
+					% Stream A = gfix ((X : later Type) -> A * X)
+					% A : Type
+					% X : later Type
+				\item
+					time-elpase intuition:
+
+					type -- a collection of well-structures terms
+					(nat -- zero, succ of nat).
+
+					guarded type theory: type  -- a collection of terms that appears to be well-structured upto $k$ unfolds.
+					% intuition: the topos of trees model and step-indexed proof interpretation
+				\item examples and important constructions (stream).
+			\end{itemize}
+
+		% ~ 35 mins
+		\item denotational semantics of PCF in guarded type theory.
+			\begin{itemize}
+				\item why cubical: higher inductive types (finite powerset and its equational reasoning), canonicity of the metatheory, difficulties in connection with the fixed point unfolding equation.
+
+				\item use denotational semantics to decide program equivalence...
+					.....
+				\item recall framework: do not touch any technical details.
+
+
+				\item
+				\item Lifting monad
+					1. [[PCF-Type]] denotation of types.
+					[[nat]]
+					[[sigma -> tau]] = [[sigma]] -> [[tau]]
+					2. [[context |- program : tau]] denotation, [[context]] -> [[tau]]
+				\item PCF non-terminating.
+					program : nat
+
+					[[program]] : Nat
+					[[program]] : bottom + Nat (type theory can decide program termination)
+					[[program]] : Lift (Nat)
+
+				\item the key definition and lemmas
+
+					(explain the definition, theorem statement.
+					explain proof of one or two intersting case e.g. [Y M])
+
+				\item the code
+			\end{itemize}
+	\end{itemize}
+\end{frame}
+
+% steam : 
+% odd stream: s0
+%
+% Strem A
+% [iso] A * later (Stream A)
+% [iso] A * later A * later later (Stream A)
+% A * later (Stream A)
+% 
+% later (later (Stream A)) -> later (Stream A)
+
+% fix f [iso] f (fix f)
+% fix[n] f [iso] f (fix[n+1] f)
+
+% prime-el (x, s)
+% = if prime number(x) then (x, prime-el s) else prime-el s.
+%
+% 
+
+% regular expression
+%
+% syntax
+% opeational semantics: AB -> s -> (..)A (...)B -> ok, A+B, A*
+% Denotational semantics: r = {s | s ~= r}. AB = {st | s ~= A, t ~= B} A* = fixedpoint
+%
+% sem[program] = {((c,s), (c',s')) | (c,s) = bigstep => (c',s')}
+%
+% sem[program] : domain => domain
+
+% stream
+
+
+\section{reference}
+\begin{frame}{reference}
+	\begin{itemize}
+		\item Marco Paviotti's PhD dissertation
+		\item Formalizing \(\pi\)-Calculus in Guarded Cubical Agda
+	\end{itemize}
+\end{frame}
+	
+\end{document}
