@@ -10,7 +10,7 @@
   by _Marco Paviotti_
   as _Ph.D. Thesis, ISBN 978-87-7949-345-2, 2016, IT-Universitetet i KØbenhavn._
 
-## part 1
+## chapter 1
 
 Two approaches for giving semantics to programs
 
@@ -159,7 +159,18 @@ Suppose that `D` is the domain of denotational interpretations.
 
 ### we are familiar with denotational semantics
 
+> denotation: direct reference of a term or expression to the actual object (what is the thing, litereally)
+> connotation: concerns associated ideas or attributes (what do you actually mean)
+
 Denotational semantics is all about "what does this syntactic object mean".
+
+The slogan: a denotational semantics for a programming language is comparable to a model theory of a logic.
+
+For example, we usually think of propositional logic in their model.
+We talks about satisfiability and equi-satisfiability but don't usually reosrt to provability and provably euivalence.
+
+- Proof theory: operational semantics of the logic.
+- Model theory: denotational semantics of the logic
 
 ```
 p : Prop    q : Prop
@@ -257,6 +268,18 @@ Finite/coutable powerset construction:
 Allow baking the intended equalities into the data defintion.
 Otherwise, you would need a canonical map for canonicalization and congruence.
 
+
+Remark on HIT:
+
+- point constructors: data/shape
+- path constructors: equality/equivalence/quotient
+- usefulness: univalence (extensional equality)
+- previous quotient solutions:
+    + Setoids: give equivalence relation and prove equivalence explictly.
+    + Canonical representation
+    + Add quotient types as axioms/postulates
+
+
 ### why GStream is definable in the first place.
 
 Recall that we have a equation `GStream A = A * later (GStream A)`, which itself is a guarded recursion.
@@ -297,6 +320,14 @@ More examples: Coinductive formulation of reactive systems.
 
 **TODO** bisimilarity proof
 
+### decidable type checking and canonicity computation with guarded recursion unfold equality
+
+In [Guarded Cubical Type Theory | Journal of Automated Reasoning](https://link.springer.com/article/10.1007/s10817-018-9471-7)
+> we want decidable type checking, including decidable judgemental equality, and so we cannot admit such an unrestricted unfolding rule. Our solution is that fixed points should not be judgementally equal to their unfoldings, but merely path equal.
+
+The will also need recover _canonicity_ i.e. things compute to introduction form.
+
+
 
 ### lifting monad
 
@@ -310,17 +341,17 @@ Note that the solution is
 
 This means: for every `A`
 
-- there is a map `injection-left  : A        -> LA`
-- there is a map `injection-right : later LA -> LA`
+- there is a map `injection-left  : A        -> LA` (eta $\eta$)
+- there is a map `injection-right : later LA -> LA` (theta $\theta$)
 
 The map `later LA -> LA` is particularly interest since it is suitable for feeding into the guarded fixed point combinator.
 
-For every `B` such that a morphism `theta{B} : later B -> B` exists, we elimination `LA` to `B`.
+For every `B` such that a morphism `theta{B} : later B -> B` exists, we can elimination `LA` to `B`.
 This can be defined as a functor `F` that transforms `f : A -> B` into `F f : LA -> B`, where
 
-- `injection-left x` where `x : A`, get mapped to `f x`
-- `injection-right y` where `y : later LA`.
-    + first compute `next (F f) <*> y`, which is in `later B`
+- for eta (now): `injection-left x` where `x : A`, get mapped to `f x`
+- for theta (avilable later): `injection-right y` where `y : later LA`.
+    + first compute `next (F f) <*> y : later B`
     + embed into `B` by `theta{B} : later B -> B`.
 
 The morphism `theta{B} : later B -> B` gives a _later algebra_
@@ -328,6 +359,20 @@ The morphism `theta{B} : later B -> B` gives a _later algebra_
 Recall that `next : B -> later B` is always defined.
 To add one step to a computation use `delta{B} x = theta (next x)` which has type `LB -> LB`
 
+Understanding the `delta` $\delta$:
+
+- start with a computation `x : LB`
+- make it available in the next step: `next x : later LB`
+- return a computation such that
+    + inspect now: not done yet
+    + inspect after one step: exactly `next x`
+
+So delta is really adding one step to the computation
+
+- if $x=\eta(v)$, the $\delta(x) = \theta(\mathrm{next}(\eta(v)))$
+- if $x=\theta(c)$, the $\delta(x) = \theta(\mathrm{next}(\theta(c)))$
+
+Intuition: come back to my when you have an extra step.
 
 ### examples of guarded recursive datatype
 
@@ -353,13 +398,6 @@ To add one step to a computation use `delta{B} x = theta (next x)` which has typ
 - Functor `G(X) = list X`
 - Functor `G(X) = gstream X`
 
-### decidability problem with guarded recursion unfold equality
-
-In [Guarded Cubical Type Theory | Journal of Automated Reasoning](https://link.springer.com/article/10.1007/s10817-018-9471-7)
-> we want decidable type checking, including decidable judgemental equality, and so we cannot admit such an unrestricted unfolding rule. Our solution is that fixed points should not be judgementally equal to their unfoldings, but merely path equal.
-
-The will also need recover _canonicity_ i.e. things compute to introduction form.
-
 ## tracking the number of unfolds in operational semantics
 
 Note, we are using call-by-names (CBN): How the application case is defined.
@@ -378,8 +416,8 @@ Note, we are using call-by-names (CBN): How the application case is defined.
     + `is-zero L M N bigstep^k Q` is `L bigstep^k (v l => match (v = 0 => M bigstep^l Q) (n: nat, v = S n => N bigstep^l Q))`
     + `Y M bigstep^k Q` is `exists l, k = S l /\ later (M (Y M) bigstep^l Q)`
 - convenient notation
-    + `M bistep^k Q` means `M bigstep^k (v l => l = 0 /\ Q(v))`
-    + `M bigstep^k u` means `M bigstep^k (v l => l = 0 /\ u = v)`
+    + `M bistep^k Q` means `M bigstep^k (v l => l = 0 /\ Q(v))` if `Q` does not care about the step-counter.
+    + `M bigstep^k u` means `M bigstep^k (v l => l = 0 /\ u = v)` if we only want to talk about the value and the step.
     + `M bigstep u` means `exists k, M bigstep^k (v l => l = 0 /\ u = v)`
 
 Similarly, we should have a small-step operational semantics that tracks the number of unfoldings.
@@ -396,6 +434,13 @@ A transitive closure that synchronize unfold in the object language (the `nat` p
 
 The problem of non-termination: what should be the denotation of a base type (`nat`, `bool`, or `unit`).
 
+Some attempts:
+
+- `[[nat]] = N` i.e. map the type `[[nat]]` to natural numbers in the semantics domain. Problem: in a constructive type theory, for such definition to be valid, we have to compute the canonical form of any closed term of type `nat`.
+- `[[nat]] = exists feul, is_some (compute fuel e)` same problem, to inhabit such type is to find the number of steps for a program to halt
+- `[[nat]] = N + step1 N + step2 N ...` or `[[nat]] = N + later [[nat]]` a lifting monad. Use the lifting monad to model potentially non-terminating program. The definition is coinductive and we lifted the requirement of finding the normal form for any program of type `nat`.
+
+Back to the denotational semantics framework
 
 - interpreation of types
     + `[[nat]] = L N` where `L` is the lifting monad (the free later algebra) and `N` is the natural number in the metalanguage. Intuition: a computation that may halt with a natural number
@@ -411,19 +456,36 @@ The problem of non-termination: what should be the denotation of a base type (`n
     + domain: `[[Gamma]] = [[sigma1]] * [[sigma2]] * [[sigma3]] ...`
     + codomain: `[[tau]]`
 - interpretation rules
-    + a variable is a projection: `[[x1:s1, x2:s2 ... |- xi]] = env => proj{i} env`
+    + a variable is a projection: `[[x1:S1, x2:S2 ... |- xi : Si]] = env => proj{i} env`
     + a constant literal is a constant function `[[E |- const n : nat]] = env => injection-left n`
-    + a lambda abstraction is a currying `[[E |- lam x:s . M : s -> t]] = env => (x => [[E , x:s |- M : t]] (env,x))`
-    + an application is an application (S combinator) `[[E |- M N : t]] = env => [[E |- M : s -> t]] env ([[E |- N : s]] env)`
+    + a lambda abstraction is a currying `[[E |- lambda x:S . M : S -> T]] = env => (x => [[E , x:S |- M : T]] (env,x))`
+    + an application is an application (S combinator) `[[E |- M N : T]] = env => [[E |- M : S -> T]] env ([[E |- N : S]] env)`
     + operations: summation/difference/product/quotient of two `nat`s, lift the operator `nat -> nat` into `L nat -> L nat`.
-    + a recursion is a guarded recursion: `[[E |- Y M : s]] = env => gfix (lx => theta{s} (next ([[E |- Y : s-> s]] env) <*> x))`
-        1. to construct `[[s]]` from `[[E]]`
-        2. invert the typing judgement to get `[[E |- M : s -> s]]` which gives `[[E]] -> [[s]] -> [[s]]` and thus `[[s]] -> [[s]]`
-        3. use Loeb's induction `(later [[s]] -> [[s]]) -> [[s]]` to introduce `later [[s]]`
-        4. lift and apply `[[E |- M : s -> s]] : [[s]] -> [[s]]` to get `later [[s]]`
-        5. use `theta{s}` to turn `later [[s]]` into `[[s]]`.
-        6. note that `later [[s]] -> [[s]]` can be directly instantiated by `theta{s}`, but doing so makes `[[E |- Y M : s]]` totally unrelated with `M`.
+    + a recursion is a guarded recursion: `[[E |- Y M : S]] = env => gfix (lx => theta{S} (next ([[E |- M : S -> S]] env) <*> lx))`
+        1. to construct `[[S]]` from `env : [[E]]`
+        2. invert the typing judgement to get `[[E |- M : S -> S]]` which gives `[[E]] -> [[S]] -> [[S]]`
+        3. use Loeb's induction `(later [[S]] -> [[S]]) -> [[S]]` to introduce `lx : later [[S]]`
+        4. lift `next ([[E |- M : S -> S]] env) : later ([[S]] -> [[S]])` and apply to `lx` get `later [[S]]`
+        5. use `theta{S}` constructor to turn `later [[S]]` into `[[S]]`.
+        6. Note that `later [[S]] -> [[S]]` can be directly instantiated by `theta{S}`.
+           This gives a term `gfix (_ => theta{S})` this is the bottom element of `L[[S]]`. Note that `bot [iso] theta (next bot)`
+           But doing so makes `[[E |- Y M : S]]` totally unrelated with `M`.
 - The denotation of a (syntactic) fixed point is indeed a (semantic) fixed point. That is, our definition validates the fixed point unfolding equation.
+
+Let's zoon in on the `Y` case and prove (MFPS15 lemma 4.1):
+If `E |- M : S -> S` then `[[E |- Y M : S]] = delta{S} . [[E |- M (Y M)]] = theta{S} . next . [[E |- M (Y M) : S]]` where `(.)` is the function composition.
+
+```
+LHS env
+= gfix (lx => theta $ next $ [[E |- M]] env) <*> lx
+= theta $ next ([[E |- M]] env) <*> (next (LHS env))
+= theta $ next $ [[E |- M]] env (LHS env)
+
+RHS enV
+= theta $ next $ [[E |- M]] env $ [[E |- Y M]] env
+= theta $ next $ [[E |- M]] env $ LHS env
+= theta $ next $ [[E |- M]] env (LHS env)
+```
 
 
 ## the framework of a logical relation proof
@@ -438,3 +500,152 @@ Actual work:
 3. subject expansion:
 4. compatible with typing rules for constructs
 5. all well-typed judgements are in the relation and thus syntax and semantics are connected.
+
+## delayed substitution
+
+To define abstraction and instantiation, we need a well-defined substitution.
+
+- dependent function `Gamma |- f : later (Pi (x:A). B)`
+- argument `Gamma |- t : later A`
+- application is substitution `Gamma |- f <*> t : later [x <- t] . B`
+- a new definitional equality `later [x <- next u] B` is `later B[u/x]`
+- if `t` eventually reduces to `next u`, then we have `Gamma |- f <*> t : later B[u/x]`
+
+We use the greek letter $\xi$ for delayed substitution.
+
+Some useful laws:
+
+- `next xi . t = next xi . u` is `later xi . (t = u)`
+- `El(universe-later (next xi. A))` is `later xi. El(A)`
+
+For more information, look into paper:
+
+- Guarded dependent type theory with coinductive types.
+- Aleš Bizjak, Hans Bugge Grathwohl, Ranald Clouston, Rasmus Ejlers Møgelberg, and Lars Birkedal.
+- In Foundations of Software Science and Computation Structures. 19th International Conference, FoSSaCS 2016.
+
+## the logical relation proof of denotational adequacy
+
+Before we start, delayed substitution allow lifting an `A * B` relation to a `later A * later B` relation.
+
+Suppose that `R : A -> B -> Type`, then `later R : later A -> later B -> Type`.
+The delayed relation `t (later R) u` is defined as a delayed substitution `later [x <- t, y <- u] . (x R y)`.
+Intuitively, when `next t` and `next u` are delayed-related now if `t` and `u` are related in the next step.
+
+A typed-index logical relation: `R : (t : PCF-type) -> [[t]] -> PCF-term -> universe`.
+
+- `eta(v) R[nat] M` is defined as `M bigstep^0 v`.  
+  A `nat` term `M` is related to a now available value `v` if `M` reduces to `v` without unfolding `Y`.
+- `theta(r) R[nat] M` is defined as `exists M' M'', M ->0* M' /\ M' ->1 M'' /\ r (later R[nat]) next M''`  
+  A `nat` term `M` is related to a later available computation `r` if `M` reduces to `M''` with one unfold and `next M''` is delayed related with `r`
+- `f R[T -> S] M` is defined as `forall (alpha : [[T]]) (N : Term), alpha R[S] N [implies] f(alpha) R[S] (M N)`
+
+The standard logical relation development
+
+### lemma 2.25 the logical relation is carried on by application
+
+Premises
+
+- `f (later R[T -> S]) next M`
+- `r (later R[T]) next N`
+
+Conclusion
+
+- `f <*> r (later R[S]) next (M N)`
+
+Proof sketch: If `f ~> next f0` and `r ~> next r0`, then we have
+
+- `later (f0 R[T->S] M)`
+- `later (r0 R[T] N)`
+- note that `R[T->S]` is a function
+- applying `<*>` to combine things under `later`
+- application results `later (f0 r0 R[S] M N)`
+- definitionally equal to `next (f0 r0) (later R[S]) next (M N)`
+- definitionally equal to `f <*> r (later R[S]) next (M N)`
+
+### lemma 2.26 a subject expansion lemma
+
+Premises
+
+- `alpha : later [[S]]`
+- `alpha (later R[S]) next N`
+- `M ->1 N` (`M` reduces to `N` by one unfold somewhere)
+
+Conclusion
+
+- `theta[S] alpha R[S] M`
+
+Proof sketch: (TODO)
+
+<!-- TODO: proof sktech: induction on `s` -->
+
+### lemma 2.27 subject reduction and subject expansion of no-unfolding steps
+
+Premise
+
+- `M ->0 N` reduction without unfolding `Y`
+
+Conclusion
+
+- `alpha R[S] M` is logically equivalent to `alpha R[S] N`
+
+<!-- TODO: proof sktech: induction on `s` -->
+
+### lemma 2.28 fundamental lemma, substitution lemma
+
+Premise
+
+- `Gamma |- u : T` where `Gamma = x1:T1, x2:T2, ...`
+- for each `x_i : T_i`, assign `t_i` and `alpha_i` such that `alpha_i R[T_i] t_i`
+
+Conclusion
+
+- `[[Gamma |- u : T]](alpha_1, alpha_2, ...) R[T] u [t1/x1, t2/x2, ...]`
+
+Intuitive understanding: given a some related pairs of semantic objects and syntactic terms,
+if we use them to instantiate an open term,
+we will ended up with a pair of related semantic object and syntactic term.
+
+<!-- TODO: proof sktech: typing judgement `Gamma |- u : T` -->
+
+### theorem 2.29 Computational Adequacy
+
+For a closed PCF term of type `nat` `M : nat`,
+and a semantic domain natural number `v : [[nat]]`,
+the following two statements are logically equivalent.
+
+- `M bigstep^k v` that is, `M` can reduce to value `v` during which exactly `k` unfolds occurred.
+- `[[|- M : nat]](*) = delta[nat]^k v` that is the denotation of `M` is `v` but `k` time step is added.
+
+Proof:
+
+- reduction to denotation: the soudness proof
+- denotation to reduction:
+    + the fundamental lemma
+    + with the empty closing-substitution (instantiated by empty semantic vector).
+    + `[[|- M : nat]](*) R[nat] M`
+    + `delta[nat]^k v R[nat] M`
+    + induction on `k`
+    + `k=0`, now: `eta(v) R[nat] M` is `M bigstep^0 v` by definition
+    + `k=1+k'`, later `theta (next (delta[nat]^k' v)) R[nat] M` by definition this is
+    + `Sigma (M' M'' : Term), M ->0* M' /\ M' ->1 M'' /\ (next (delta[nat]^k' v)) (later R[nat]) next M''`
+    + strip off `next` with delayed substitution
+    + `Sigma (M' M'' : Term), M ->0* M' /\ M' ->1 M'' /\ later ((delta[nat]^k' v) R[nat] M'')`
+    + combine with IH, which states `delta[nat]^k' v R[nat] M''` implies `M'' bigstep^k' v`, to complete the proof
+
+## closing remark
+
+the notion of abstract time in guarded type theory:
+
+- Is different from the concept of time in temporal logic.
+  In temporal logic, time is the property of the object or the structure of the object. When we say `next phi`, we don't prove `phi` in the next time step, we prove "for the current state, phi will hold after a step of evolution".
+  We prove things by talking about "after one step, the system will be in state X Y Z, and thus ..."
+- In guarded type theory, time is the property of the metalanguage i.e. the logic itself.
+  When we say `later P`, we have access to `P` when we have a time step recourse.
+- can be used to synchronize reasoning and computation of recursion.
+
+remarks
+
+- more things in the metatheory
+- less trash in the formalization
+- the efforts we paid in developing better type theories will be paid out
