@@ -289,31 +289,6 @@
 			Access to the recursive structure is stratified.
 	\end{itemize}
 \end{frame}
-\begin{frame}[allowframebreaks]{later algebra}
-	$\later$-algebra $(A,\theta_A)$ where $A: \univ$ and $\theta_A : \later A \to A$\\
-
-	\begin{block}{delayed computation}
-		\begin{enumerate}
-			\item Given $a:A$, make it available later $\pure\,a : \later A$
-			\item Pull delayed value back $\theta (\pure\, a) : A$
-			\item $\delta \eqdef \theta \circ \pure : A \to A$ adds one time step to the computation
-		\end{enumerate}
-	\end{block}
-
-	\begin{block}{every later algebra has a bottom element}
-		\begin{equation*}
-			\bot \eqdef \gfix (\theta)
-			\equiv \theta (\pure (\gfix (\theta)))
-			\equiv \delta (\bot)
-		\end{equation*}
-	\end{block}
-
-	\newcommand{\Stm}{\mathbin{\text{\texttt{Stream}}}_A}
-	A type sort / an universe is a $\later$-algebra: define datatypes with guarded recursion
-	\begin{equation*}
-		\Stm \equiv \gfix(\lambda X . A \times X) \cong A \times \later \Stm
-	\end{equation*}
-\end{frame}
 \begin{frame}[allowframebreaks]{Types are step-indexed spaces}
 	\begin{tabular}{lll}
 		Types & propositions & $P_i$ to be satisfied, at stage $i$\\
@@ -391,8 +366,35 @@
 	% This is a computation that always with hold the result. $(\Unit,\Unit,\Unit,\Unit,\ldots)$
 \end{frame}
 
-
 \section{A domain of potentially non-terminating computation}
+
+\begin{frame}[allowframebreaks]{later algebra}
+	$\later$-algebra $(A,\theta_A)$ where $A: \univ$ and $\theta_A : \later A \to A$\\
+
+	\begin{block}{delayed computation}
+		\begin{enumerate}
+			\item Given $a:A$, make it available later $\pure\,a : \later A$
+			\item Pull delayed value back $\theta (\pure\, a) : A$
+			\item $\delta \eqdef \theta \circ \pure : A \to A$ adds one time step to the computation
+		\end{enumerate}
+	\end{block}
+
+	\begin{block}{every later algebra has a bottom element}
+		\begin{equation*}
+			\bot \eqdef \gfix (\theta)
+			\equiv \theta (\pure (\gfix (\theta)))
+			\equiv \delta (\bot)
+		\end{equation*}
+	\end{block}
+
+	\newcommand{\Stm}{\mathbin{\text{\texttt{Stream}}}_A}
+	A type sort / an universe is a $\later$-algebra: define datatypes with guarded recursion
+	\begin{equation*}
+		\Stm \equiv \gfix(\lambda X . A \times X) \cong A \times \later \Stm
+	\end{equation*}
+\end{frame}
+
+
 \begin{frame}[allowframebreaks]{the lifting monad}
 	A free $\later$-algebra
 	\begin{equation*}
@@ -445,28 +447,23 @@
 			}
 		\end{tikzpicture}
 	\end{center}
+\end{frame}
 
-	\framebreak
-	The natural choice for modeling potentially diverging computation.
+\begin{frame}{Modeling potential non-termination}
+	A computation that may give back $v$ in the future or diverge
 	\begin{itemize}
 		\item An already done computation: $\eta(v)$
 		\item A computation that terminates in $1$ step: $\theta(\pure(v)) = \delta(v)$
 		\item A computation that terminates in $2$ step: $\theta(\pure (\theta (\pure (v)))) = \delta^2(v)$
+		\item $\cdots$
+		\item A computation that terminates in $k$ step: $\delta^k(v)$
 	\end{itemize}
-	The bottom element of $L_A$: $\bot_{L_A} \eqdef \gfix (\theta)$
+	The bottom element $\bot_{L_A} \eqdef \gfix (\theta)$
 	\begin{itemize}
 		\item Unfold $1$: $\delta^1$ of $\bot$
 		\item Unfold $2$: $\delta^2$ of $\bot$
 		\item $\cdots$
 		\item Unfold $k$: $\delta^k$ of $\bot$
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{A mnemonic}
-	\begin{itemize}
-		\item $\eta$ for now
-		\item $\theta$ for future
-		\item $\delta$ for delay
 	\end{itemize}
 \end{frame}
 
@@ -485,9 +482,17 @@
 	\vspace{8ex}
 
 	A family of $\later$-algebras formed by lifting monads and functions.\\
-	A domain for ``potentially terminating computations that may result in a value''.
+	A domain for ``any potentially non-terminating computations''.
 \end{frame}
 
+\begin{frame}{A mnemonic}
+	Build a timeline for general recursion using
+	\begin{itemize}
+		\item $\eta$ for now
+		\item $\theta$ for future
+		\item $\delta$ for delay
+	\end{itemize}
+\end{frame}
 
 \section{A guarded recursion semantics for PCF}
 \subsection{Interpretation of PCF in the domain}
