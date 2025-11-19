@@ -4,7 +4,7 @@
 \usepackage{sansmathfonts}
 
 \usepackage{amsmath, amssymb, amsthm}
-\usepackage{stmaryrd}
+\usepackage{extarrows}
 
 \usepackage{tikz}
 \usetikzlibrary{positioning}
@@ -28,6 +28,8 @@
 \newcommand{\univ}{\mathcal{U}}
 
 \newcommand{\bigstep}{\Downarrow}
+
+\newcommand{\sat}{\mathbin{\text{\texttt{SAT}}}}
 
 \newcommand{\prd}{\mathbin{\text{\texttt{pred}}}}
 \newcommand{\suc}{\mathbin{\text{\texttt{succ}}}}
@@ -107,10 +109,11 @@
 	\end{block}
 
 	\begin{block}{Denotational semantics: what are matched by a pattern}
-		\begin{align*}
-			\mathcal{M}(r_1 | r_2) &= \mathcal{M}(r_1) \cup \mathcal{M}(r_2)\\
-			\mathcal{M}(r^*) &= \bigcup_{n\in\mathbb{N}}\mathcal{M}(r^k) = \fix(\lambda  T . \{\epsilon\} \cup \{s\cdot t \mid s \in \mathcal{M}(r) \land t\in T\})
-		\end{align*}
+		\begin{equation*}
+			\mathcal{M}(r_1 | r_2) = \mathcal{M}(r_1) \cup \mathcal{M}(r_2)
+			\qquad
+			\mathcal{M}(r_1 \cdot r_2) = \{s \cdot t \mid s\in\mathcal{M}(r_1) \land t\in \mathcal{M}(r_2) \}
+		\end{equation*}
 		Oh, we are normal programmers.
 	\end{block}
 
@@ -120,26 +123,29 @@
 \begin{frame}{Propositional logic as a PL and two semantics for the PL}
 	How do we understand a statement in propositional logic? For example, $p\land q \to p$
 	\begin{itemize}
-		\item Proofs and provability\\
+		\item Proofs and provability
 			\begin{itemize}
 				\item Transform the sequent with rules. Construct a closed proof tree.
-				\item Example: go from $\Gamma, \phi \vdash \psi$ to $\Gamma \vdash \phi \to \psi$.
+				\item Example: transform $\Gamma \vdash \phi \to \psi$ into $\Gamma, \phi \vdash \psi$
 				\item $\vdash p\land q\to p$ is a theorem: proved by $\to I$ and $\land E_l$.
 			\end{itemize}
-		\item Interpretations and satisfiability\\
+		\item Interpretations and satisfiability
 			\begin{itemize}
 				\item Assign values to variable. Define the truth table of connectives.
 				\item Example: $I\models \phi \land \psi$ iff $I\models\phi$ and $I\models\psi$.
 				\item $\models p\land q \to p$ is a tautology: true under all interpretations.
 			\end{itemize}
 	\end{itemize}
-		
-	Proofs: how to operationally prove statements. Operational semantics of logics.\\
-	Models: what does being true means. Denotational semantics of logics.\\
-	
-	\vfill
+	\vspace{2ex}
+	Model theory : Denotational semantics \quad Proof theory : Operational semantics
+
 	\begin{block}{desirable aspects of model theory}
-		Determining equivalence is often eaiser in denotational semantics.
+		Determining operational equivalence with denotational semantics.
+		\begin{itemize}
+			\item refutation by soundness: $\phi \oplus \psi \in \sat \implies \phi \not\equiv \psi$
+			\item confirmation by completeness: $\neg (\phi \oplus \psi) \notin \sat \implies \phi \equiv \psi$
+		\end{itemize}
+		Searching for a model is often easier than searching for a proof.
 	\end{block}
 \end{frame}
 
@@ -154,20 +160,21 @@
 		\sem{\sigma\times \tau} &\eqdef \sem{\tau} \times \sem{\sigma} \\
 		\sem{\sigma + \tau} &\eqdef \sem{\sigma} \uplus \sem{\tau} 
 	\end{align*}
-	Closed-terms are things that will reduce to a value, but what about open terms?
+	Closed-terms normalize to a value, but what about open terms?
 
 	\framebreak
-	Open terms can be closed by substituting free variables with well-typed values.\\[4ex]
+	Open terms can be closed by substituting free variables with well-typed values.
 
-	$\typed{\Gamma}{e}{\tau}$ where the context is $\Gamma = x_1 : \sigma_1, x_2 : \sigma_2, \ldots$
-	\begin{enumerate}
-		\item A series of terms $v_i$ such that $\typed{\ectx}{v_i}{\sigma_i}$
-		\item Substitution to have a closed term $\typed{\ectx}{e[v_1/x_1,\ v_2/x_2,\ \ldots]}{\tau}$
-		\item The term $e[v_1/x_1,\ v_2/x_2,\ \ldots]$ will reduce to a value in $\sem{\tau}$
-	\end{enumerate}
-	\vspace{3ex}
-	$\sem{\typed{\Gamma}{e}{\tau}}$ is a function from $\sem{\Gamma} = \sem{\sigma_1}\times \sem{\sigma_2}\times \ldots$ to $\sem{\tau}$\\[3ex]
-	Specifically $\sem{\typed{\ectx}{e}{\tau}}$ is a function from $\Unit$ to $\sem{\tau}$
+	\begin{block}{Open terms are functions}
+		$\typed{\Gamma}{e}{\tau}$ where the context is $\Gamma = x_1 : \sigma_1, x_2 : \sigma_2, \ldots$
+		\begin{enumerate}
+			\item A series of terms $v_i$ such that $\typed{\ectx}{v_i}{\sigma_i}$
+			\item Substitution to have a closed term $\typed{\ectx}{e[v_1/x_1,\ v_2/x_2,\ \ldots]}{\tau}$
+			\item The term $e[v_1/x_1,\ v_2/x_2,\ \ldots]$ will reduce to a value in $\sem{\tau}$
+		\end{enumerate}
+		$\sem{\typed{\Gamma}{e}{\tau}}$ is a function from $\sem{\Gamma} = \sem{\sigma_1}\times \sem{\sigma_2}\times \ldots$ to $\sem{\tau}$
+	\end{block}
+	Degenerated case $\sem{\typed{\ectx}{e}{\tau}}$ is a function from $\Unit$ to $\sem{\tau}$
 
 	\framebreak
 	Interpret type judgements by induction on the type derivation.
@@ -189,30 +196,27 @@
 				\sem{\typed{\Gamma}{\lambda x^\sigma . e}{\sigma\to\tau}} &\eqdef \lambda \gamma . \lambda a . f\ (\gamma,a) & \sem{\Gamma} \to \sem{\sigma} \to \sem{\tau}
 			\end{align*}
 	\end{itemize}
-% SLOGAN: eta for now, theta for later, delta for delay
 	\framebreak
-	Prove some theorems
+	Finally prove some very general theorems\footnote{A good article on them, FYI. Cardone, Felice, "Games, Full Abstraction and Full Completeness", The Stanford Encyclopedia of Philosophy (Spring 2021 Edition), Edward N. Zalta (ed.)}
 	\begin{itemize}
-		\item soundness: $M =_{\beta\eta} N \implies \sem{\typed{\Gamma}{M}{\tau}}=\sem{\typed{\Gamma}{N}{\tau}}$\\
-			Straight forward induction:
+		\item soundness $M =_{\beta\eta} N \implies \sem{\typed{\Gamma}{M}{\tau}}=\sem{\typed{\Gamma}{N}{\tau}}$\\
 			\begin{enumerate}
+				\item induction on equivalence derivation
 				\item weakening lemma to handle context extension
 				\item substitution lemma $\sem{\typed{\Gamma}{M[N/x]}{\tau}} = \sem{\typed{\Gamma}{(\lambda x^\sigma . M)N}{\tau}}$
-				\item congruence lemma
-				\item beta-reduction/eta-expansion preserves denotational equivalence
+				\item $\beta$ and $\eta$ rules preserve denotational equivalence
 			\end{enumerate}
-		\item adequacy: $\sem{\typed{\Gamma}{M}{\tau}}=v \implies M =_{\beta\eta} \underline{v}$
-			\begin{itemize}
-				\item define a type-index logical relation that captures hereditary normalization. $e\ R_T\ \sem{u}$
+		\item computational adequacy $\sem{\typed{\Gamma}{M}{\tau}}=v \implies M =_{\beta\eta} \underline{v}$
+			\begin{enumerate}
+				\item type-index logical relation for hereditary normalization $\Term\times\sem{\Term} \subseteq R_{\Gamma\vdash \tau}$
 				\item application of related things are related
-				\item subject expansion
 				\item substitution lemma
-				\item subject reduction
-				\item fundamental lemma: closing-substitution for well-typed terms is in the relation
-			\end{itemize}
-		\item completeness: PL folks don't care about this\footnote{FYI, search for Henkin models}
-		\item full abstraction: $M =_{\beta\eta} N \iff \sem{\typed{\Gamma}{M}{\tau}}=\sem{\typed{\Gamma}{N}{\tau}}$\\
-			out of scope.
+				\item subject expansion \& subject reduction
+				\item fundamental lemma: well-typed + closing-substitution
+			\end{enumerate}
+		\item \demph{completeness: $\sem{\typed{\Gamma}{M}{\tau}} = \sem{\typed{\Gamma}{N}{\tau}} \implies M =_{\beta\eta} N$}
+		\item \demph{full abstraction: $M =_{\beta\eta} N \iff \sem{\typed{\Gamma}{M}{\tau}}=\sem{\typed{\Gamma}{N}{\tau}}$}
+		\item \demph{full completeness: $\sem{\cdot}$ is surjective, every model corresponds to some program}
 	\end{itemize}
 \end{frame}
 
@@ -251,14 +255,14 @@
 	\begin{itemize}
 		\item dynamic system: $F(X) = X$
 		\item stream $F(X) = A \times X$
-		\item deterministic automata\footnote{may have infinite states} $F(X) = 2 \times X^A$
+		\item deterministic automata $F(X) = 2 \times X^A$
 		\item deterministic automata, partial transition function $F(X) = 2 \times {(1 + X})^A$
 		\item non-deterministic automata $F(X) = 2 \times {\mathcal{P}(X)}^A$
 	\end{itemize}
 
 	\vspace{3ex}
 
-	We will want things that are not even co-algebra!
+	We may bulid things that are not even a co-algebra!
 \end{frame}
 \begin{frame}{time in the metatheory}
 	\textbf{Intuition} $\later A$ is same as $A$ but available only in the next step.
@@ -416,7 +420,7 @@
 						\fi
 					\else
 						\ifnum\j=0
-							\node (n-\i-\j) at (\x,\y) {$1$};
+							\node (n-\i-\j) at (\x,\y) {$L_A$};
 						\else
 							\node (n-\i-\j) at (\x,\y) {$A(\j)$};
 						\fi
@@ -517,7 +521,7 @@
 		\sem{\typed{\Gamma}{\Y\,M}{\tau}}(\gamma) &\eqdef \gfix (\lambda x^{\later \sem{\tau}}\ .\ \theta_{\sem{\tau}}(\pure (\sem{\typed{\Gamma}{M}{\tau\to\tau}}(\gamma)) \ap x)) \\
 	\end{align*}
 \end{frame}
-\begin{frame}{Unfold in object language is delayed evaluation in metatheory}
+\begin{frame}{unfold in object language is delayed unfold in metatheory}
 	\begin{equation*}
 		\sem{\typed{\Gamma}{\Y\,M}{\tau}} = \delta \circ \sem{\typed{\Gamma}{M\,(\Y\,M)}{\tau}}
 	\end{equation*}
@@ -612,15 +616,21 @@
 		\implies
 		\RRd{\tau}{f \ap r}{\pure\, (M\,N)}
 	\end{equation*}
+
+	\vfill
+
+	``Use logical relation of function types as a function''
 \end{frame}
 
-\begin{frame}{subject expansion: one unfold}
-	For $M\to^1 N$ reduction by unfolding\footnote{either by a top-level unfolding or a congruence reduction} $\Y$
+\begin{frame}{subject expansion: unfold step}
+	For $M\to^1 N$ reduction by unfolding
 	\begin{equation*}
 		\RRd{\tau}{\alpha}{\pure N}
 		\implies
 		\RR{\tau}{\theta(\alpha)}{M}
 	\end{equation*}
+	Applicable for both top level unfold $\Y\,M \to^1 M\,(\Y M)$\\
+	and unfold under congruence $(\Y\,M)\, N \to^1 (M\,(\Y M))\,N$
 \end{frame}
 
 \begin{frame}{subject expansion\&reduction: unfold-free step}
@@ -648,17 +658,16 @@
 		\implies
 		M \bigstep^k_o v
 	\end{equation*}
-	By fundamental lemma, $\RR{\nat}{\delta^k(v)}{M}$\\
-	Induction on $k$:
+	By fundamental lemma, $\RR{\nat}{\delta^k(v)}{M}$, induction on $k$:
 	\begin{itemize}
 		\item $\RR{\nat}{\delta^0(v)}{M}$ by definition $M \bigstep^0_o v$
-		\item $\RR{\nat}{\theta(\pure(\delta^k(v)))}{M}$
+		\item $\RR{\nat}{\theta(\pure\, \delta^k(v))}{M}$
 			exists $M_0,M_1$ such that $M\to^0_* M_0$, $M_0\to^1 M_1$, and
 			\begin{equation*}
-				\RRd{\nat}{\pure (\delta^k(v))}{\pure(M_1)}
-				\implies
+				\RRd{\nat}{\pure\, \delta^k(v)}{\pure\, M_1}
+				\xLongrightarrow{\pure\ \ap}
 				\later ( \RR{\nat}{\delta^k(v)}{M_1} )
-				\implies
+				\xLongrightarrow{\text{ IH }}
 				\later ( M_1\bigstep^k_o v )
 			\end{equation*}
 			Chain them up $M \to^0_* M_0\to^1 M_1$ and $\later (M_1\bigstep^k_o v)$: $M \bigstep^{1\!+k}_o v$
