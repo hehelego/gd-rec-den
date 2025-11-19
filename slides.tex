@@ -119,7 +119,7 @@
 		Oh, we are normal programmers.
 	\end{block}
 
-	\textbf{Caveat} the connotation, ``assignments that I have to re-handin'', is out of scope.
+	\textbf{Caveat} the connotation, ``assignments that I have to re hand-in'', is out of scope.
 \end{frame}
 
 \begin{frame}{Propositional logic as a PL and two semantics for the PL}
@@ -152,7 +152,7 @@
 \end{frame}
 
 
-\begin{frame}[allowframebreaks]{The Set-theoretic model of STLC: A recipie you can replicate}
+\begin{frame}[allowframebreaks]{The Set-theoretic model of STLC: A recipe you can replicate}
 	Types are sets of values
 	\begin{align*}
 		\sem{\unit} &\eqdef \Unit \\
@@ -199,22 +199,22 @@
 			\end{align*}
 	\end{itemize}
 	\framebreak
-	Finally prove some very general theorems\footnote{A good article on them, FYI. Cardone, Felice, "Games, Full Abstraction and Full Completeness", The Stanford Encyclopedia of Philosophy (Spring 2021 Edition), Edward N. Zalta (ed.)}
+	Finally, prove some very general theorems\footnote{A good article on them, FYI. Cardone, Felice, "Games, Full Abstraction and Full Completeness", The Stanford Encyclopedia of Philosophy (Spring 2021 Edition), Edward N. Zalta (ed.)}
 	\begin{itemize}
 		\item soundness $M =_{\beta\eta} N \implies \sem{\typed{\Gamma}{M}{\tau}}=\sem{\typed{\Gamma}{N}{\tau}}$\\
 			\begin{enumerate}
 				\item induction on equivalence derivation
-				\item weakening lemma to handle context extension
-				\item substitution lemma $\sem{\typed{\Gamma}{M[N/x]}{\tau}} = \sem{\typed{\Gamma}{(\lambda x^\sigma . M)N}{\tau}}$
-				\item $\beta$ and $\eta$ rules preserve denotational equivalence
+				% \item weakening lemma to handle context extension
+				% \item substitution lemma $\sem{\typed{\Gamma}{M[N/x]}{\tau}} = \sem{\typed{\Gamma}{(\lambda x^\sigma . M)N}{\tau}}$
+				% \item $\beta$ and $\eta$ rules preserve denotational equivalence
 			\end{enumerate}
 		\item computational adequacy $\sem{\typed{\Gamma}{M}{\tau}}=v \implies M =_{\beta\eta} \underline{v}$
 			\begin{enumerate}
 				\item type-index logical relation for hereditary normalization $\Term\times\sem{\Term} \subseteq R_{\Gamma\vdash \tau}$
-				\item application of related things are related
-				\item substitution lemma
-				\item subject expansion \& subject reduction
-				\item fundamental lemma: well-typed + closing-substitution
+				% \item application of related things are related
+				% \item substitution lemma
+				% \item subject expansion \& subject reduction
+				\item fundamental lemma: well-typed $\land$ closing-substitution $\implies$ related
 			\end{enumerate}
 		\item \demph{completeness: $\sem{\typed{\Gamma}{M}{\tau}} = \sem{\typed{\Gamma}{N}{\tau}} \implies M =_{\beta\eta} N$}
 		\item \demph{full abstraction: $M =_{\beta\eta} N \iff \sem{\typed{\Gamma}{M}{\tau}}=\sem{\typed{\Gamma}{N}{\tau}}$}
@@ -224,7 +224,7 @@
 
 \begin{frame}{The problem of generalizability}
 	Denotational semantics is natural!\\
-	Set-theoretic model cannot accomodate general recursion.
+	Set-theoretic model cannot accommodate general recursion.
 	\begin{itemize}
 		\item mutable states
 		\item general references
@@ -235,11 +235,11 @@
 	\end{itemize}
 
 	\vfill
-	Solution: interpret program in semantic domains with rich structures
+	To interpret program in semantic domains with rich structures\\
+	More proof obligations: constructions respect the domain structure.
 	\begin{itemize}
-		\item More proof obligations: constructions respect the domain structure.
-		\item The way out: construct domains in metatheory $\implies$ domain inside the metatheory
-		\item The type theory automatically guarantees the constructions can be accomodated.
+		\item construct domains in a metatheory $\implies$ bake domains into the metatheory
+		\item all constructions in the type theory can be reflected in the semantics domain
 	\end{itemize}
 \end{frame}
 
@@ -264,7 +264,7 @@
 
 	\vspace{3ex}
 
-	We may bulid things that are not even a co-algebra!
+	We may build things that are not even a co-algebra!
 \end{frame}
 \begin{frame}{time in the metatheory}
 	\textbf{Intuition} $\later A$ is same as $A$ but available only in the next step.
@@ -496,7 +496,7 @@
 
 \section{A guarded recursion semantics for PCF}
 \subsection{Interpretation of PCF in the domain}
-\begin{frame}{Interpreation of types}
+\begin{frame}{Interpretation of types}
 
 	Interpret base types as lifting monads:
 	\begin{equation*}
@@ -516,7 +516,7 @@
 	\end{itemize}
 \end{frame}
 \begin{frame}{Interpretation of type judgements}
-	$\fbox{$\sem{\typed{\Gamma}{M}{\tau}}(\gamma)$}$ \quad ``The denotation of $M$ given interpreation of free variables in $\gamma$''
+	$\fbox{$\sem{\typed{\Gamma}{M}{\tau}}(\gamma)$}$ \quad ``The denotation of $M$ given interpretation of free variables in $\gamma$''
 	\begin{align*}
 		\demph{\sem{\typed{\Gamma, x_i:\sigma_i,\Delta}{x_i}{\sigma_i}}(\gamma)} &\demph{\eqdef \pi_i} \\
 		\demph{\sem{\typed{\Gamma}{\lambda x . M}{\sigma\to\tau}}(\gamma)} &\demph{\eqdef \lambda x^{\sem{\sigma}}.\sem{\typed{\Gamma,x:\sigma}{M}{\tau}}(\gamma,x)} \\
@@ -559,11 +559,12 @@
 		\demph{M\,N \bigstep^k Q}             & \demph{\eqdef M\bigstep^k \lambda v . \lambda l . \Sigma x L . v = \underline{\lambda x.L} \tand L[N/x] \bigstep^l Q} \\
 		\Y\,M \bigstep^k Q                    & \eqdef \Sigma k' . k = 1\!+k' \land \later (M\, (\Y\,M) \bigstep^{k'} Q)                                              \\
 	\end{align*}
+	% Note fuel passing on and fuel consumption
 
 	Short-hand notation: $M \bigstep^k_o v = M\bigstep^k \lambda u . \lambda l . l = 0 \tand u = v$.
 \end{frame}
 
-\subsection{Soudness proof sketch}
+\subsection{Soundness proof sketch}
 \begin{frame}{Soundness of denotational semantics w.r.t. big-step operational semantics}
 	The denotation of operationally equivalent closed-terms coincide.
 	\begin{equation*}
@@ -582,21 +583,21 @@
 
 \subsection{Adequacy proof sketch}
 \begin{frame}{Adequacy of denotational semantics w.r.t. big-step operational semantics}
-	Evaluation in the denotational domain is big-step evaluation.
+	Another synchronization: evaluating the denotation $\Rightarrow$ reduction sequence
 	\begin{equation*}
 		\sem{\ectx \vdash M : \nat}(\ast) = \delta^k \sem{\typed{\ectx}{v}{\nat}}(\ast)
 		\implies
 		M \bigstep^k_o v
 	\end{equation*}
 \end{frame}
-\begin{frame}{Logical relation proof method}
-	Strengthen the induction hypothesis, so it becomes inductive:
-	\begin{itemize}
-		\item preserved under congruent reduction
-		\item preserved under substitution
-		\item preserved under unfolding of $\Y$
-	\end{itemize}
-\end{frame}
+% \begin{frame}{Logical relation proof method}
+% 	Strengthen the induction hypothesis, so it becomes inductive:
+% 	\begin{itemize}
+% 		\item preserved under congruent reduction
+% 		\item preserved under substitution
+% 		\item preserved under unfolding of $\Y$
+% 	\end{itemize}
+% \end{frame}
 \begin{frame}{The logical relation}
 	$\fbox{$\mathcal{R}_{\tau} : \sem{\tau} \to \Term \to \univ$}$ \quad ``associating a term and a denotation''
 	\begin{align*}
@@ -615,6 +616,61 @@
 	\end{equation*}
 \end{frame}
 
+
+\begin{frame}{fundamental lemma}
+	\begin{itemize}
+		\item Open term $\typed{\Gamma}{e}{\tau}$ where $\Gamma = x_1 : \sigma_1,\ldots,x_n:\sigma_n$
+		\item Instantiation $\RR{\sigma_i}{\alpha_i}{s_i}$ for $i=1,2,\ldots,n$
+		\item Related closing substitution $\RR{\tau}{\sem{\typed{\Gamma}{t}{\tau}}(\alpha_1,\ldots,\alpha_n)}{t[s_1/x_1,\ldots,s_n/x_n]}$
+	\end{itemize}
+	\vfill
+	% Cover proof sketch optionally at the end of this talk
+\end{frame}
+
+\begin{frame}{closing up the proof}
+	Recall adequacy:
+	\begin{equation*}
+		\sem{\ectx \vdash M : \nat}(\ast) = \delta^k \sem{\typed{\ectx}{v}{\nat}}(\ast)
+		\implies
+		M \bigstep^k_o v
+	\end{equation*}
+	By fundamental lemma, $\RR{\nat}{\delta^k(v)}{M}$, induction on $k$:
+	\begin{itemize}
+		\item $\RR{\nat}{\delta^0(v)}{M}$ by definition $M \bigstep^0_o v$
+		\item $\RR{\nat}{\theta(\pure\, \delta^k(v))}{M}$
+			exists $M_0,M_1$ such that $M\to^0_* M_0$, $M_0\to^1 M_1$, and
+			\begin{equation*}
+				\RRd{\nat}{\pure\, \delta^k(v)}{\pure\, M_1}
+				\xLongrightarrow{\pure\ \ap}
+				\later ( \RR{\nat}{\delta^k(v)}{M_1} )
+				\xLongrightarrow{\text{ IH }}
+				\later ( M_1\bigstep^k_o v )
+			\end{equation*}
+			Chain them up $M \to^0_* M_0\to^1 M_1$ and $\later (M_1\bigstep^k_o v)$: $M \bigstep^{1\!+k}_o v$
+	\end{itemize}
+\end{frame}
+
+\section*{Conclusion}
+\begin{frame}{Review \& Prospect}
+	What we have seen:
+	\begin{itemize}
+		\item Time steps of metatheory level reasoning.
+		\item Guarded recursion $(\later A \to A)\to A$: $\gfix(F) \equiv (F\circ \pure)\gfix(F)$
+		\item The free $\later$-algebra, the lifting monad, $L_A \cong L_A + \later L_A$
+		\item Synchronization: $\Y\,M\to^1 M\,(\Y\,M)$ $\iff$ $\sem{\Y\,M} = \delta \circ \sem{M\,(\Y\,M)}$
+		\item Yet another logical relation proof for adequacy.
+	\end{itemize}
+	\vspace{4ex}
+	Moral of the story:\\
+
+	\textbf{From} Semantic domain formalized in a metatheory\\
+	\textbf{To} Semantic domain baked into the metatheory\\
+	\vspace{4ex}
+
+	The efforts of developing advanced type theories will be paid off\\
+\end{frame}
+
+\section*{More proof sketch}
 \begin{frame}{application lemma}
 	\begin{equation*}
 		\RRd{\sigma\to \tau}{f}{\pure\, M}
@@ -647,58 +703,6 @@
 		\iff
 		\RR{\tau}{\alpha}{N}
 	\end{equation*}
-\end{frame}
-
-
-\begin{frame}{fundamental lemma}
-	\begin{itemize}
-		\item Open term $\typed{\Gamma}{e}{\tau}$ where $\Gamma = x_1 : \sigma_1,\ldots,x_n:\sigma_n$
-		\item Instantiation $\RR{\sigma_i}{\alpha_i}{s_i}$ for $i=1,2,\ldots,n$
-		\item Related closing substitution $\RR{\tau}{\sem{\typed{\Gamma}{t}{\tau}}(\alpha_1,\ldots,\alpha_n)}{t[s_1/x_1,\ldots,s_n/x_n]}$
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{closing up the proof}
-	Recall adequacy:
-	\begin{equation*}
-		\sem{\ectx \vdash M : \nat}(\ast) = \delta^k \sem{\typed{\ectx}{v}{\nat}}(\ast)
-		\implies
-		M \bigstep^k_o v
-	\end{equation*}
-	By fundamental lemma, $\RR{\nat}{\delta^k(v)}{M}$, induction on $k$:
-	\begin{itemize}
-		\item $\RR{\nat}{\delta^0(v)}{M}$ by definition $M \bigstep^0_o v$
-		\item $\RR{\nat}{\theta(\pure\, \delta^k(v))}{M}$
-			exists $M_0,M_1$ such that $M\to^0_* M_0$, $M_0\to^1 M_1$, and
-			\begin{equation*}
-				\RRd{\nat}{\pure\, \delta^k(v)}{\pure\, M_1}
-				\xLongrightarrow{\pure\ \ap}
-				\later ( \RR{\nat}{\delta^k(v)}{M_1} )
-				\xLongrightarrow{\text{ IH }}
-				\later ( M_1\bigstep^k_o v )
-			\end{equation*}
-			Chain them up $M \to^0_* M_0\to^1 M_1$ and $\later (M_1\bigstep^k_o v)$: $M \bigstep^{1\!+k}_o v$
-	\end{itemize}
-\end{frame}
-
-\section{Conclusion}
-\begin{frame}{Review \& Prospect}
-	What we have seen:
-	\begin{itemize}
-		\item Time steps of metatheory level reasoning.
-		\item Guarded recursion $(\later A \to A)\to A$: $\gfix(F) \equiv (F\circ \pure)\gfix(F)$
-		\item The free $\later$-algebra, the lifting monad, $L_A \cong L_A + \later L_A$
-		\item Synchronization: $\Y\,M\to^1 M\,(\Y\,M)$ $\iff$ $\sem{\Y\,M} = \delta \circ \sem{M\,(\Y\,M)}$
-		\item Yet another logical relation proof for adequacy.
-	\end{itemize}
-	\vspace{4ex}
-	Moral of the story:\\
-
-	\textbf{From} Semantic domain formalized in a metatheory\\
-	\textbf{To} Semantic domain baked into the metatheory\\
-	\vspace{4ex}
-
-	The efforts of developing advanced type theories will be paid out\\
 \end{frame}
 
 \end{document}
