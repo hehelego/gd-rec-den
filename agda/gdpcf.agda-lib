@@ -1,0 +1,5 @@
+name: guarded-denotation-pcf
+include: .
+depend: cubical
+flags: --cubical --guarded --guardedness -WnoUnsupportedIndexedMatch
+
