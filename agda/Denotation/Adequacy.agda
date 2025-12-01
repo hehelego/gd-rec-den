@@ -1,0 +1,1 @@
+module Denotation.Adequacy where
