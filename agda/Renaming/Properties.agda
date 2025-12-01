@@ -1,6 +1,7 @@
 open import Agda.Builtin.Cubical.Path
-open import Cubical.Foundations.Prelude hiding (Type; _,_) renaming (_∙_ to trans)
+open import Cubical.Foundations.Prelude hiding (Type; _,_; cong; cong₂; cong₃) renaming (_∙_ to trans)
 
+open import Helper
 open import Term
 open import Renaming.Base
 
@@ -41,15 +42,8 @@ rename-id (abs t) = cong abs (trans (cong (_⟪ t ⟫) (ext-id _)) (rename-id t)
 rename-id (# n) = refl
 rename-id (pred t) = cong pred (rename-id t)
 rename-id (succ t) = cong succ (rename-id t)
+rename-id (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (rename-id e) (rename-id t₀) (rename-id t₁)
 rename-id (Y t) = cong Y (rename-id t)
-rename-id {Γ = Γ} (ifz e then t₀ else t₁) =
-    idᴿ Γ ⟪ ifz e then t₀ else t₁ ⟫
-        ≡⟨⟩
-    ifz (idᴿ Γ ⟪ e ⟫) then (idᴿ Γ ⟪ t₀ ⟫) else (idᴿ Γ ⟪ t₁ ⟫)
-        ≡⟨ cong (ifz_then _ else _) (rename-id e) ⟩
-    ifz e then (idᴿ Γ ⟪ t₀ ⟫) else (idᴿ Γ ⟪ t₁ ⟫)
-        ≡⟨ cong₂ (ifz _ then_else_) (rename-id t₀) (rename-id t₁) ⟩
-    ifz e then t₀ else t₁ ∎
 
 rename-◇ⱽ : (ρ₂ : Renaming Δ Ω) (ρ₁ : Renaming Γ Δ) (x : Γ ∋ τ) → ρ₂ ◇ ρ₁ ⟨ x ⟩ ≡ ρ₂ ⟨ ρ₁ ⟨ x ⟩ ⟩
 rename-◇ⱽ ρ₂ (x ∷ ρ₁) Z     = refl
@@ -63,16 +57,7 @@ rename-◇ ρ₂ ρ₁ (# n) = refl
 rename-◇ ρ₂ ρ₁ (pred t) = cong pred (rename-◇ ρ₂ ρ₁ t)
 rename-◇ ρ₂ ρ₁ (succ t) = cong succ (rename-◇ ρ₂ ρ₁ t)
 rename-◇ ρ₂ ρ₁ (Y t) = cong Y (rename-◇ ρ₂ ρ₁ t)
-rename-◇ ρ₂ ρ₁ (ifz e then t₀ else t₁) =
-    ρ₂ ◇ ρ₁ ⟪ ifz e then t₀ else t₁ ⟫
-        ≡⟨⟩
-    ifz (ρ₂ ◇ ρ₁ ⟪ e ⟫) then (ρ₂ ◇ ρ₁ ⟪ t₀ ⟫) else (ρ₂ ◇ ρ₁ ⟪ t₁ ⟫)
-        ≡⟨ cong (ifz_then _ else _) (rename-◇ ρ₂ ρ₁ e) ⟩
-    ifz (ρ₂ ⟪ ρ₁ ⟪ e ⟫ ⟫) then (ρ₂ ◇ ρ₁ ⟪ t₀ ⟫) else (ρ₂ ◇ ρ₁ ⟪ t₁ ⟫)
-        ≡⟨ cong₂ (ifz _ then_else_) (rename-◇ ρ₂ ρ₁ t₀) (rename-◇ ρ₂ ρ₁ t₁) ⟩
-    ifz (ρ₂ ⟪ ρ₁ ⟪ e ⟫ ⟫) then (ρ₂ ⟪ ρ₁ ⟪ t₀ ⟫ ⟫) else (ρ₂ ⟪ ρ₁ ⟪ t₁ ⟫ ⟫)
-        ≡⟨⟩
-    ρ₂ ⟪ ρ₁ ⟪ ifz e then t₀ else t₁ ⟫ ⟫ ∎
+rename-◇ ρ₂ ρ₁ (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (rename-◇ ρ₂ ρ₁ e) (rename-◇ ρ₂ ρ₁ t₀) (rename-◇ ρ₂ ρ₁ t₁)
 
 ◇-identʳ : (ρ : Renaming Γ Δ) → ρ ◇ idᴿ _ ≡ ρ
 ◇-identʳ ρ = renaming-extensionality _ _ λ τ x → trans (rename-◇ⱽ ρ (idᴿ _) x) (cong (ρ ⟨_⟩) (rename-idⱽ x))

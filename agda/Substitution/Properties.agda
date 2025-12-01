@@ -1,19 +1,12 @@
 open import Agda.Builtin.Cubical.Path
-open import Cubical.Foundations.Prelude hiding (Type; _,_; lift; cong; cong₂) renaming (_∙_ to trans)
+open import Cubical.Foundations.Prelude hiding (Type; _,_; lift; cong; cong₂; cong₃) renaming (_∙_ to trans)
 
+open import Helper
 open import Term
 open import Renaming
 open import Substitution.Base
 
 module Substitution.Properties where
-
-cong : ∀ {A B : Set} (f : A → B) → {x y : A} → x ≡ y → f x ≡ f y
-cong f eq = λ i → f (eq i)
-
-cong₂ : ∀ {A B C : Set} (f : A → B → C) → {x x' : A} {y y' : B}
-      → x ≡ x' → y ≡ y'
-      → f x y ≡ f x' y'
-cong₂ f eqx eqy = λ i → f (eqx i) (eqy i)
 
 variable σ σ₁ σ₂ : Subst Γ Δ
 
@@ -56,17 +49,8 @@ lift-⟪-⟫ˢ ρ (abs t) = cong abs (trans (cong (_⟪ t ⟫ˢ) (exts-lift ρ))
 lift-⟪-⟫ˢ ρ (# n) = refl
 lift-⟪-⟫ˢ ρ (pred t) = cong pred (lift-⟪-⟫ˢ ρ t)
 lift-⟪-⟫ˢ ρ (succ t) = cong succ (lift-⟪-⟫ˢ ρ t)
+lift-⟪-⟫ˢ ρ (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (lift-⟪-⟫ˢ ρ e) (lift-⟪-⟫ˢ ρ t₀) (lift-⟪-⟫ˢ ρ t₁)
 lift-⟪-⟫ˢ ρ (Y t) = cong Y (lift-⟪-⟫ˢ ρ t)
-lift-⟪-⟫ˢ ρ (ifz e then t₀ else t₁) =
-    lift ρ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-        ≡⟨⟩
-    ifz (lift ρ ⟪ e ⟫ˢ) then (lift ρ ⟪ t₀ ⟫ˢ) else (lift ρ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong (ifz_then _ else _) (lift-⟪-⟫ˢ ρ e) ⟩
-    ifz ρ ⟪ e ⟫ then (lift ρ ⟪ t₀ ⟫ˢ) else (lift ρ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong₂ (ifz _ then_else_) (lift-⟪-⟫ˢ ρ t₀) (lift-⟪-⟫ˢ ρ t₁) ⟩
-    ifz ρ ⟪ e ⟫ then ρ ⟪ t₀ ⟫ else ρ ⟪ t₁ ⟫
-        ≡⟨⟩
-    ρ ⟪ ifz e then t₀ else t₁ ⟫ ∎
 
 lift-⬗ : (σ : Subst Δ Ω) (ρ : Renaming Γ Δ) → σ ⬗ ρ ≡ σ ◆ lift ρ
 lift-⬗ σ ∅       = refl
@@ -104,17 +88,8 @@ subst-⬖ ρ σ (abs t) = cong abs (trans (cong (_⟪ t ⟫ˢ) (exts-⬖ ρ σ))
 subst-⬖ ρ σ (# n) = refl
 subst-⬖ ρ σ (pred t) = cong pred (subst-⬖ ρ σ t)
 subst-⬖ ρ σ (succ t) = cong succ (subst-⬖ ρ σ t)
+subst-⬖ ρ σ (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (subst-⬖ ρ σ e) (subst-⬖ ρ σ t₀) (subst-⬖ ρ σ t₁)
 subst-⬖ ρ σ (Y t) = cong Y (subst-⬖ ρ σ t)
-subst-⬖ ρ σ (ifz e then t₀ else t₁) =
-    ρ ⬖ σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-        ≡⟨⟩
-    ifz (ρ ⬖ σ ⟪ e ⟫ˢ) then (ρ ⬖ σ ⟪ t₀ ⟫ˢ) else (ρ ⬖ σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong (ifz_then _ else _) (subst-⬖ ρ σ e) ⟩
-    ifz (ρ ⟪ σ ⟪ e ⟫ˢ ⟫) then (ρ ⬖ σ ⟪ t₀ ⟫ˢ) else (ρ ⬖ σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong₂ (ifz _ then_else_) (subst-⬖ ρ σ t₀) (subst-⬖ ρ σ t₁) ⟩
-    ifz (ρ ⟪ σ ⟪ e ⟫ˢ ⟫) then (ρ ⟪ σ ⟪ t₀ ⟫ˢ ⟫) else (ρ ⟪ σ ⟪ t₁ ⟫ˢ ⟫)
-        ≡⟨⟩
-    ρ ⟪ σ ⟪ ifz e then t₀ else t₁ ⟫ˢ ⟫ ∎
 
 --------------------------------------------------------------------------------
 ---- Mixed Version Right                                                    ----
@@ -139,17 +114,8 @@ subst-⬗ σ ρ (abs t) = cong abs (trans (cong _⟪ t ⟫ˢ (exts-⬗ σ ρ)) (
 subst-⬗ ρ σ (# n) = refl
 subst-⬗ ρ σ (pred t) = cong pred (subst-⬗ ρ σ t)
 subst-⬗ ρ σ (succ t) = cong succ (subst-⬗ ρ σ t)
+subst-⬗ ρ σ (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (subst-⬗ ρ σ e) (subst-⬗ ρ σ t₀) (subst-⬗ ρ σ t₁)
 subst-⬗ ρ σ (Y t) = cong Y (subst-⬗ ρ σ t)
-subst-⬗ ρ σ (ifz e then t₀ else t₁) =
-    ρ ⬗ σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-        ≡⟨⟩
-    ifz (ρ ⬗ σ ⟪ e ⟫ˢ) then (ρ ⬗ σ ⟪ t₀ ⟫ˢ) else (ρ ⬗ σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong (ifz_then _ else _) (subst-⬗ ρ σ e) ⟩
-    ifz (ρ ⟪ σ ⟪ e ⟫ ⟫ˢ) then (ρ ⬗ σ ⟪ t₀ ⟫ˢ) else (ρ ⬗ σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong₂ (ifz _ then_else_) (subst-⬗ ρ σ t₀) (subst-⬗ ρ σ t₁) ⟩
-    ifz (ρ ⟪ σ ⟪ e ⟫ ⟫ˢ) then (ρ ⟪ σ ⟪ t₀ ⟫ ⟫ˢ) else (ρ ⟪ σ ⟪ t₁ ⟫ ⟫ˢ)
-        ≡⟨⟩
-    ρ ⟪ σ ⟪ ifz e then t₀ else t₁ ⟫ ⟫ˢ ∎
 
 
 
@@ -222,16 +188,8 @@ subst-id (abs t) = cong abs (trans (cong (_⟪ t ⟫ˢ) (exts-id _)) (subst-id t
 subst-id (# n) = refl
 subst-id (pred t) = cong pred (subst-id t)
 subst-id (succ t) = cong succ (subst-id t)
+subst-id (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (subst-id e) (subst-id t₀) (subst-id t₁)
 subst-id (Y t) = cong Y (subst-id t)
-subst-id {Γ = Γ} (ifz e then t₀ else t₁) =
-    idˢ Γ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-        ≡⟨⟩
-    ifz (idˢ Γ ⟪ e ⟫ˢ) then (idˢ Γ ⟪ t₀ ⟫ˢ) else (idˢ Γ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong (ifz_then _ else _) (subst-id e) ⟩
-    ifz e then (idˢ Γ ⟪ t₀ ⟫ˢ) else (idˢ Γ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong₂ (ifz _ then_else_) (subst-id t₀) (subst-id t₁) ⟩
-    ifz e then t₀ else t₁ ∎
-
 
 
 subst-◆ⱽ : (σ₂ : Subst Δ Ω) (σ₁ : Subst Γ Δ) (x : Γ ∋ τ) → σ₂ ◆ σ₁ ⟨ x ⟩ˢ ≡ σ₂ ⟪ σ₁ ⟨ x ⟩ˢ ⟫ˢ
@@ -245,17 +203,8 @@ subst-◆ σ₂ σ₁ (abs t) = cong abs (trans ((cong (_⟪ t ⟫ˢ)) (exts-◆
 subst-◆ ρ σ (# n) = refl
 subst-◆ ρ σ (pred t) = cong pred (subst-◆ ρ σ t)
 subst-◆ ρ σ (succ t) = cong succ (subst-◆ ρ σ t)
+subst-◆ ρ σ (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (subst-◆ ρ σ e) (subst-◆ ρ σ t₀) (subst-◆ ρ σ t₁)
 subst-◆ ρ σ (Y t) = cong Y (subst-◆ ρ σ t)
-subst-◆ ρ σ (ifz e then t₀ else t₁) =
-    ρ ◆ σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-        ≡⟨⟩
-    ifz (ρ ◆ σ ⟪ e ⟫ˢ) then (ρ ◆ σ ⟪ t₀ ⟫ˢ) else (ρ ◆ σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong (ifz_then _ else _) (subst-◆ ρ σ e) ⟩
-    ifz (ρ ⟪ σ ⟪ e ⟫ˢ ⟫ˢ) then (ρ ◆ σ ⟪ t₀ ⟫ˢ) else (ρ ◆ σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong₂ (ifz _ then_else_) (subst-◆ ρ σ t₀) (subst-◆ ρ σ t₁) ⟩
-    ifz (ρ ⟪ σ ⟪ e ⟫ˢ ⟫ˢ) then (ρ ⟪ σ ⟪ t₀ ⟫ˢ ⟫ˢ) else (ρ ⟪ σ ⟪ t₁ ⟫ˢ ⟫ˢ)
-        ≡⟨⟩
-    ρ ⟪ σ ⟪ ifz e then t₀ else t₁ ⟫ˢ ⟫ˢ ∎
 
 
 suc-subst-⟨-⟩ˢ-⬖ : (σ : Subst Γ Δ) (x : Γ ∋ τ) → suc-subst {τ = τ₁} σ ⟨ x ⟩ˢ ≡ suc-renaming (idᴿ Δ) ⬖ σ ⟨ x ⟩ˢ
@@ -280,17 +229,8 @@ suc-subst-⟪-⟫ˢ σ (abs t) = cong abs (exts-⟪-⟫ˢ σ t)
 suc-subst-⟪-⟫ˢ σ (# n) = refl
 suc-subst-⟪-⟫ˢ σ (pred t) = cong pred (suc-subst-⟪-⟫ˢ σ t)
 suc-subst-⟪-⟫ˢ σ (succ t) = cong succ (suc-subst-⟪-⟫ˢ σ t)
+suc-subst-⟪-⟫ˢ σ (ifz e then t₀ else t₁) = cong₃ ifz_then_else_ (suc-subst-⟪-⟫ˢ σ e) (suc-subst-⟪-⟫ˢ σ t₀) (suc-subst-⟪-⟫ˢ σ t₁) 
 suc-subst-⟪-⟫ˢ σ (Y t) = cong Y (suc-subst-⟪-⟫ˢ σ t)
-suc-subst-⟪-⟫ˢ σ (ifz e then t₀ else t₁) =
-    suc-subst σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-        ≡⟨⟩
-    ifz (suc-subst σ ⟪ e ⟫ˢ) then (suc-subst σ ⟪ t₀ ⟫ˢ) else (suc-subst σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong (ifz_then _ else _) (suc-subst-⟪-⟫ˢ σ e) ⟩
-    ifz (suc-renaming (idᴿ _) ⟪ σ ⟪ e ⟫ˢ ⟫) then (suc-subst σ ⟪ t₀ ⟫ˢ) else (suc-subst σ ⟪ t₁ ⟫ˢ)
-        ≡⟨ cong₂ (ifz _ then_else_) (suc-subst-⟪-⟫ˢ σ t₀) (suc-subst-⟪-⟫ˢ σ t₁) ⟩
-    ifz (suc-renaming (idᴿ _) ⟪ σ ⟪ e ⟫ˢ ⟫) then (suc-renaming (idᴿ _) ⟪ σ ⟪ t₀ ⟫ˢ ⟫) else (suc-renaming (idᴿ _) ⟪ σ ⟪ t₁ ⟫ˢ ⟫)
-        ≡⟨⟩
-    suc-renaming (idᴿ _) ⟪ σ ⟪ ifz e then t₀ else t₁ ⟫ˢ ⟫ ∎
 
 ◆-identʳ : (σ : Subst Γ Δ) → σ ◆ idˢ _ ≡ σ
 ◆-identʳ σ = subst-extensionality _ _ λ τ x →
