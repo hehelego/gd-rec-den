@@ -2,6 +2,7 @@ open import Agda.Builtin.Nat
 open import Agda.Builtin.Unit
 open import Agda.Builtin.Cubical.Path
 
+open import Helper using (nat-pred; nat-succ)
 open import LaterPrims
 open import Term
 open import Denotation.LaterAlgebra
@@ -40,13 +41,6 @@ infixl 9 _⟨_⟩ᵉ
 _⟨_⟩ᵉ : ⟦ Γ ⟧c → Γ ∋ τ → ⟦ τ ⟧t
 (α ∷ γ) ⟨ Z ⟩ᵉ = α
 (σ ∷ γ) ⟨ S x ⟩ᵉ = γ ⟨ x ⟩ᵉ
-
-nat-pred : Nat → Nat
-nat-pred zero = 0
-nat-pred (suc n) = n
-
-nat-succ : Nat → Nat
-nat-succ = suc
 
 nat-ifz : ∀ {A : Set} (x y : A) (n : Nat) → A
 nat-ifz t0 t1 zero = t0

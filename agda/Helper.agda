@@ -1,4 +1,5 @@
 open import Agda.Builtin.Cubical.Path
+open import Agda.Builtin.Nat
 
 -- congruence without universe polymorphism
 
@@ -14,3 +15,10 @@ cong₃ : ∀ {A B C D : Set} (f : A → B → C → D) → {x x' : A} {y y' : B
       → x ≡ x' → y ≡ y' → z ≡ z'
       → f x y z ≡ f x' y' z'
 cong₃ f eqx eqy eqz = λ i → f (eqx i) (eqy i) (eqz i)
+
+nat-pred : Nat → Nat
+nat-pred zero = 0
+nat-pred (suc n) = n
+
+nat-succ : Nat → Nat
+nat-succ = suc
