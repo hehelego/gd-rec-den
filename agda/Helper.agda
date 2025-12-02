@@ -1,5 +1,17 @@
 open import Agda.Builtin.Cubical.Path
 open import Agda.Builtin.Nat
+open import Agda.Builtin.Sigma
+
+
+infixr 5 _×_
+record _×_ (A : Set) (B : Set) : Set where
+  constructor pair
+  field
+    pfst : A
+    psnd : B
+
+∃₂ : {A B : Set} (P : A → B → Set) → Set
+∃₂ {A} {B} P = Σ (A × B) λ { (pair x y) → P x y }
 
 -- congruence without universe polymorphism
 

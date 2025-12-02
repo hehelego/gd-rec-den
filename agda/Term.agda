@@ -11,7 +11,6 @@ infix  9 #_
 infix  6 ifz_then_else_
 
 data Type : Set where
-  ⋆   : Type
   nat : Type
   _⇒_ : Type → Type → Type
 

@@ -10,12 +10,10 @@ open import Denotation.LaterAlgebra
 module Denotation.Interpretation where
 
 ⟦_⟧t : Type → Set
-⟦ ⋆ ⟧t = 𝓛 ⊤
 ⟦ nat ⟧t = 𝓛 Nat
 ⟦ σ ⇒ τ ⟧t = ⟦ σ ⟧t → ⟦ τ ⟧t
 
 ▹alg-⟦_⟧t : (τ : Type) → ▹algebra ⟦ τ ⟧t
-▹alg-⟦ ⋆ ⟧t = ▹alg-free
 ▹alg-⟦ nat ⟧t = ▹alg-free
 ▹alg-⟦ σ ⇒ τ ⟧t = ▹alg-fun ▹alg-⟦ τ ⟧t
 
