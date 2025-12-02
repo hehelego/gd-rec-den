@@ -8,7 +8,7 @@ infix  4 _⊢_
 infixr 7 _⇒_
 infixl 7 _∙_
 infix  9 #_
-infix  8 ifz_then_else_
+infix  6 ifz_then_else_
 
 data Type : Set where
   ⋆   : Type
@@ -22,9 +22,6 @@ data Ctx : Set where
   _,_ : Ctx → Type → Ctx
 
 variable Γ Δ Ω : Ctx
-
-_ : Ctx
-_  = ∅ , ⋆ , (⋆ ⇒ ⋆) -- a context containing a variable of type ⋆ and a variable of type ⋆ ⇒ ⋆
 
 -- Proof that a variable of a type is in a Context/the deBrujin index
 data _∋_ : Ctx → Type → Set where
@@ -46,3 +43,7 @@ data _⊢_ : Ctx → Type → Set where
   succ : Γ ⊢ nat → Γ ⊢ nat
   ifz_then_else_ : Γ ⊢ nat → Γ ⊢ τ → Γ ⊢ τ → Γ ⊢ τ
   Y   : Γ ⊢ τ ⇒ τ → Γ ⊢ τ
+
+data Value : Γ ⊢ τ → Set where
+    v-nat : (n : Nat) → Value {Γ = Γ} (# n)
+    v-abs : (t : Γ , τ₁ ⊢ τ₂) → Value (abs t)
