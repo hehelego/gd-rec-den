@@ -11,7 +11,7 @@ data Renaming : Ctx → Ctx → Set where
   ∅   : Renaming ∅ Δ
   _∷_ : Δ ∋ τ → Renaming Γ Δ → Renaming (Γ , τ) Δ
 
-private variable ρ ρ₁ ρ₂ : Renaming Γ Δ
+variable ρ ρ₁ ρ₂ : Renaming Γ Δ
 
 suc-renaming : Renaming Γ Δ → Renaming Γ (Δ , τ)
 suc-renaming ∅ = ∅
