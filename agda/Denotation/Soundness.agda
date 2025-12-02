@@ -185,3 +185,30 @@ sound→[s] {γ = γ} (ifz e then t₀ else t₁) (ifz e' then t₀ else t₁) (
     = ifz-delay {n = e} {n' = e'} {t₀ = t₀} {t₁ = t₁} (sound→[s] e e' e→e')
 sound→[s] {γ = γ} (Y f) (f ∙ (Y f)) red-unfold = Y-delay f
 
+
+
+δ'[_] : Nat → ⟦ τ ⟧t → ⟦ τ ⟧t
+δ'[ zero ] x = x
+δ'[ suc n ] x = δ' (δ'[ n ] x)
+
+
+soundness : (k : Nat) (e e' : Γ ⊢ τ)
+          → e ⇒[ k ] e'
+          → ⟦ e ⟧ γ ≡ δ'[ k ] (⟦ e' ⟧ γ)
+soundness zero e e mred-refl = refl
+soundness {γ = γ} k e e'' (mred-z {e' = e'} e→e' e'⇒e'') =
+    ⟦ e ⟧ γ
+        ≡⟨ sound→[z] e e' e→e' ⟩
+    ⟦ e' ⟧ γ
+        ≡⟨ soundness zero e' e'' e'⇒e'' ⟩
+    ⟦ e'' ⟧ γ ∎
+soundness {γ = γ} (suc k) e e' (mred-s {e₀ = e₀} {e₁ = e₁} e⇒e₀ e₀→e₁ e₁⇒e') =
+    ⟦ e ⟧ γ
+        ≡⟨ soundness zero e e₀ e⇒e₀ ⟩
+    ⟦ e₀ ⟧ γ
+        ≡⟨ sound→[s] e₀ e₁ e₀→e₁ ⟩
+    δ' (⟦ e₁ ⟧ γ)
+        ≡⟨ cong δ' (soundness k e₁ e' e₁⇒e') ⟩
+    δ' (δ'[ k ] (⟦ e' ⟧ γ))
+        ≡⟨⟩
+    δ'[ suc k ] (⟦ e' ⟧ γ) ∎
