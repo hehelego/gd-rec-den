@@ -1,14 +1,17 @@
 open import Cubical.Foundations.Prelude hiding (Type; _,_; _∙_; cong; cong₂; cong₃)
 
 open import Agda.Builtin.Nat
+open import Agda.Builtin.Bool
 
 open import Helper
 open import LaterPrims
 open import Term
 open import Renaming.Base
+open import Substitution.Base
 open import Denotation.LaterAlgebra
 open import Denotation.Interpretation
 open import Denotation.RenSub
+open import OpSem.SmallStep
 
 module Denotation.Soundness where
 
@@ -111,4 +114,74 @@ ifz-delay {γ = γ} {n} {n'} {t₀} {t₁} eq =
         θ' (next (⟦ ifz var Z then M else N ⟧ (α ∷ γ)))
             ≡⟨⟩
         δ' (⟦ ifz var Z then M else N ⟧ (α ∷ γ)) ∎
+
+
+sound→[z] : (e e' : Γ ⊢ τ) → e →[ false ] e' → ⟦ e ⟧ γ ≡ ⟦ e' ⟧ γ
+sound→[z] {γ = γ} (f ∙ t) .(f' ∙ t) (red-app {f' = f'} f→f') = cong (λ [f] → [f] (⟦ t ⟧ γ)) (sound→[z] f f' f→f')
+sound→[z] {γ = γ} (abs f ∙ t) e' red-beta =
+    ⟦ abs f ∙ t ⟧ γ
+        ≡⟨⟩
+    (⟦ abs f ⟧ γ) (⟦ t ⟧ γ)
+        ≡⟨⟩
+    ⟦ f ⟧ (⟦ t ⟧ γ ∷ γ)
+        ≡⟨ cong (λ [γ] → ⟦ f ⟧ (⟦ t ⟧ γ ∷ [γ])) (sym subst-idᶜ⟪ γ ⟫ˢ) ⟩
+    ⟦ f ⟧ (⟦ t ⟧ γ ∷ idˢ _ ᶜ⟪ γ ⟫ˢ)
+        ≡⟨⟩
+    ⟦ f ⟧ ((t ∷ idˢ _) ᶜ⟪ γ ⟫ˢ)
+        ≡⟨ subst-⟦ f ⟧ (t ∷ idˢ _) γ ⟩
+    ⟦ (t ∷ idˢ _) ⟪ f ⟫ˢ ⟧ γ
+        ≡⟨⟩
+    ⟦ f [ t ] ⟧ γ ∎
+sound→[z] (pred e) (pred e') (red-pred e→e') = cong (𝓛-map nat-pred) (sound→[z] e e' e→e')
+sound→[z] (pred (# zero)) (# zero) red-pred' = refl
+sound→[z] (pred (# suc n)) (# n) red-pred' = refl
+sound→[z] (succ e) (succ e') (red-succ e→e') = cong (𝓛-map nat-succ) (sound→[z] e e' e→e')
+sound→[z] (succ (# n)) e' red-succ' = refl
+sound→[z] {γ = γ} (ifz e then t₀ else t₁) (ifz e' then t₀ else t₁) (red-ifz e→e') = cong (map-ext _ (nat-ifz _ _)) (sound→[z] e e' e→e')
+sound→[z] {γ = γ} (ifz (# zero) then t₀ else t₁) t₀ red-ifz-z =
+    ⟦ ifz # zero then t₀ else t₁ ⟧ γ
+        ≡⟨⟩
+    map-ext ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ)) (now zero)
+        ≡⟨⟩
+    gfix (map-ext-body ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ))) (now zero)
+        ≡⟨ gfix-unfold (map-ext-body ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ))) ≡$ now zero ⟩
+    ⟦ t₀ ⟧ γ ∎
+sound→[z] {γ = γ} (ifz (# suc _) then t₀ else t₁) e' red-ifz-s =
+    ⟦ ifz (# suc _) then t₀ else t₁ ⟧ γ
+        ≡⟨⟩
+    map-ext ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ)) (now (suc _))
+        ≡⟨⟩
+    gfix (map-ext-body ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ))) (now (suc _))
+        ≡⟨ gfix-unfold (map-ext-body ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ))) ≡$ now (suc _) ⟩
+    ⟦ t₁ ⟧ γ ∎
+
+
+sound→[s] : (e e' : Γ ⊢ τ) → e →[ true ] e' → ⟦ e ⟧ γ ≡ δ' (⟦ e' ⟧ γ)
+sound→[s] {γ = γ} (f ∙ t) (f' ∙ t) (red-app f→f') =
+    ⟦ f ∙ t ⟧ γ
+        ≡⟨⟩
+    (⟦ f ⟧ γ) (⟦ t ⟧ γ)
+        ≡⟨ sound→[s] f f' f→f' ≡$ ⟦ t ⟧ γ ⟩
+    (δ' (⟦ f' ⟧ γ)) (⟦ t ⟧ γ)
+        ≡⟨⟩
+    δ' (⟦ f' ∙ t ⟧ γ) ∎
+sound→[s] {γ = γ} (pred e) (pred e') (red-pred e→e') =
+    ⟦ pred e ⟧ γ
+        ≡⟨⟩
+    𝓛-map nat-pred (⟦ e ⟧ γ)
+        ≡⟨ cong (𝓛-map nat-pred) (sound→[s] e e' e→e') ⟩
+    𝓛-map nat-pred (δ' {nat} (⟦ e' ⟧ γ))
+        ≡⟨⟩
+    δ' {nat} (⟦ pred e' ⟧ γ) ∎
+sound→[s] {γ = γ} (succ e) (succ e') (red-succ e→e') =
+    ⟦ succ e ⟧ γ
+        ≡⟨⟩
+    𝓛-map nat-succ (⟦ e ⟧ γ)
+        ≡⟨ cong (𝓛-map nat-succ) (sound→[s] e e' e→e') ⟩
+    𝓛-map nat-succ (δ' {nat} (⟦ e' ⟧ γ))
+        ≡⟨⟩
+    δ' {nat} (⟦ succ e' ⟧ γ) ∎
+sound→[s] {γ = γ} (ifz e then t₀ else t₁) (ifz e' then t₀ else t₁) (red-ifz e→e')
+    = ifz-delay {n = e} {n' = e'} {t₀ = t₀} {t₁ = t₁} (sound→[s] e e' e→e')
+sound→[s] {γ = γ} (Y f) (f ∙ (Y f)) red-unfold = Y-delay f
 
