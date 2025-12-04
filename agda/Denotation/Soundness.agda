@@ -156,7 +156,6 @@ sound→[s] (red-unfold {f = f}) = Y-delay f
 δ'[ zero ] x = x
 δ'[ suc n ] x = δ' (δ'[ n ] x)
 
-
 soundness : {k : Nat} {e e' : Γ ⊢ τ}
           → e ⇒[ k ] e'
           → ⟦ e ⟧ γ ≡ δ'[ k ] (⟦ e' ⟧ γ)
@@ -167,13 +166,13 @@ soundness {γ = γ} {k} (mred-z {e = e} {e' = e'} {e'' = e''} e→e' e'⇒e'') =
     ⟦ e' ⟧ γ
         ≡⟨ soundness e'⇒e'' ⟩
     ⟦ e'' ⟧ γ ∎
-soundness {γ = γ} {suc k} (mred-s {e = e} {e₀ = e₀} {e₁ = e₁} {e' = e'} e⇒e₀ e₀→e₁ e₁⇒e') =
+soundness {τ = τ} {γ = γ} {suc k} (mred-s {e = e} {e₀ = e₀} {e₁ = e₁} {e' = e'} e⇒e₀ e₀→e₁ e₁⇒e') =
     ⟦ e ⟧ γ
         ≡⟨ soundness e⇒e₀ ⟩
     ⟦ e₀ ⟧ γ
         ≡⟨ sound→[s] e₀→e₁ ⟩
     δ' (⟦ e₁ ⟧ γ)
-        ≡⟨ cong δ' (soundness e₁⇒e') ⟩
+        ≡⟨ cong θ' (later-ext (next (soundness {γ = γ} {k = k}) ⊛ e₁⇒e')) ⟩
     δ' (δ'[ k ] (⟦ e' ⟧ γ))
         ≡⟨⟩
     δ'[ suc k ] (⟦ e' ⟧ γ) ∎

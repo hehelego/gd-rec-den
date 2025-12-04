@@ -52,6 +52,6 @@ data _⇒[_]_ {Γ : Ctx} : Γ ⊢ τ → Nat → Γ ⊢ τ → Set where
   mred-s : {e e₀ e₁ e' : Γ ⊢ τ} {k : Nat}
          → e  ⇒[ zero  ] e₀
          → e₀ →[ true  ] e₁
-         → e₁ ⇒[ k     ] e'
+         → ▹ (e₁ ⇒[ k  ] e')
          → e  ⇒[ suc k ] e'
 

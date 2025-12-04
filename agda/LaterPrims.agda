@@ -32,3 +32,6 @@ _⊛_ f x a = f a (x a)
 postulate
   gfix : ∀ {l} {A : Set l} → (▹ A → A) → A
   gfix-unfold : ∀ {l} {A : Set l} (f : ▹ A → A) → gfix f ≡ f (next (gfix f))
+
+later-ext : ∀ {A : Set} → {f g : ▹ A} → (▸ \ α → f α ≡ g α) → f ≡ g
+later-ext eq = \ i α → eq α i
