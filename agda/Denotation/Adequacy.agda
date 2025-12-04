@@ -12,6 +12,7 @@ open import Renaming.Base
 open import Substitution.Base
 open import Substitution.Properties
 open import OpSem.SmallStep
+open import OpSem.SProperties
 open import Denotation.LaterAlgebra
 open import Denotation.Interpretation
 open import Denotation.RenSub
@@ -77,16 +78,40 @@ LR→[z]LR : (e e' : Γ ⊢ τ) → e →[ false ] e'
          → (α : ⟦ τ ⟧t)
          → LR e  α
          → LR e' α
-LR→[z]LR {τ = nat} e e' e→e' (now n) e~α =
-  let e⇒[z]n = LR-unfoldη e~α -- TODO: small-step is deterministic, drop the first-step of this multi-step reduction
-   in LR-foldη {!   !}
-LR→[z]LR {τ = nat} e e' e→e' (future r) e~r =
-  let q = LR-unfoldθ e~r 
-   in LR-foldθ {!   !}
+LR→[z]LR {τ = nat} e e' e→e' (now n) e~α 
+  with LR-unfoldη e~α
+... | mred-z e→e'' e''⇒n = let e''=e' = →-deterministic e→e'' e→e'
+                               e'⇒n = subst (_⇒[ zero ] # n) e''=e' e''⇒n
+                            in LR-foldη e'⇒n
+LR→[z]LR {τ = nat} e e' e→e' (future r) e~α
+  with LR-unfoldθ e~α
+... | ⟨ pair e₀ e₁ , pair e⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ
+  with e⇒e₀
+... | mred-refl = absurd (absurd→[z][s] e→e' e₀→e₁)
+... | mred-z e→e'' e''⇒e₀ = let e''=e' = →-deterministic e→e'' e→e'
+                                e'⇒e₀ = subst (_⇒[ zero ] e₀) e''=e' e''⇒e₀
+                             in LR-foldθ ⟨ pair e₀ e₁ , pair e'⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ
 LR→[z]LR {τ = τ ⇒ σ} f f' f→f' φ f~φ {t} {α} t~α = LR→[z]LR {τ = σ}
                                                    (f ∙ t) (f' ∙ t) (red-app f→f')
                                                    (φ α)
                                                    (f~φ t~α)
+
+
+LR←[z]LR : (e e' : Γ ⊢ τ) → e →[ false ] e'
+         → (α : ⟦ τ ⟧t)
+         → LR e' α
+         → LR e  α
+LR←[z]LR {τ = nat} e e' e→e' (now n) e'~α =
+  let e'⇒n = LR-unfoldη e'~α
+   in LR-foldη (mred-z e→e' e'⇒n)
+LR←[z]LR {τ = nat} e e' e→e' (future r) e'~α =
+  let ⟨ pair e₀ e₁ , pair e'⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ = LR-unfoldθ e'~α
+   in LR-foldθ ⟨ pair e₀ e₁ , pair (mred-z e→e' e'⇒e₀) (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ
+LR←[z]LR {τ = τ ⇒ σ} f f' f→f' φ f'~φ {t} {α} t~α = LR←[z]LR {τ = σ}
+                                                    (f ∙ t) (f' ∙ t) (red-app f→f')
+                                                    (φ α)
+                                                    (f'~φ t~α)
+
 
 LR-σ~γ : Subst Γ ∅ → ⟦ Γ ⟧c → Set
 LR-σ~γ ∅ ∅ = ⊤
@@ -98,9 +123,18 @@ fundamental-lemma : (e : Γ ⊢ τ) (σ : Subst Γ ∅) (γ : ⟦ Γ ⟧c)
 fundamental-lemma (var Z) (t ∷ σ) (α ∷ γ) (pair t~α σ~γ) = t~α
 fundamental-lemma (var (S x)) (t ∷ σ) (α ∷ γ) (pair t~α σ~γ) = fundamental-lemma (var x) σ γ σ~γ
 fundamental-lemma (f ∙ t) σ γ σ~γ = (fundamental-lemma f σ γ σ~γ)(fundamental-lemma t σ γ σ~γ)
-fundamental-lemma (abs e) σ γ σ~γ {t} {α} t~α = {! IH  !}
+fundamental-lemma (abs e) σ γ σ~γ {t} {α} t~α = proof
   where
+    IH : LR ((t ∷ σ) ⟪ e ⟫ˢ) (⟦ e ⟧ (α ∷ γ))
     IH = fundamental-lemma e (t ∷ σ) (α ∷ γ) (pair t~α σ~γ)
+
+    -- eq is probably incorrect. Need an alternative proof
+    -- counterexample: [e = # 0]
+    eq : (t ∷ σ) ⟪ e ⟫ˢ ≡ abs (exts σ ⟪ e ⟫ˢ) ∙ t
+    eq = {!   !}
+
+    proof : LR (σ ⟪ abs e ⟫ˢ ∙ t) (⟦ e ⟧ (α ∷ γ))
+    proof = subst (λ t → LR t (⟦ e ⟧ (α ∷ γ))) eq IH
 fundamental-lemma (# n) σ γ σ~γ = LR-foldη mred-refl
 fundamental-lemma (pred e) σ γ σ~γ = {!  !}
   where

@@ -10,6 +10,10 @@ record _×_ (A : Set) (B : Set) : Set where
     pfst : A
     psnd : B
 
+data ⊥ : Set where
+absurd : ∀ {l} {A : Set l} → ⊥ → A
+absurd ()
+
 ∃₂ : {A B : Set} (P : A → B → Set) → Set
 ∃₂ {A} {B} P = Σ (A × B) λ { (pair x y) → P x y }
 
