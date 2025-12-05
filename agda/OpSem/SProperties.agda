@@ -12,6 +12,55 @@ open import Substitution
 
 module OpSem.SProperties where
 
+Bool→Nat : Bool → Nat
+Bool→Nat false = zero
+Bool→Nat true  = suc zero
+
+mred-red : {e e' : Γ ⊢ τ} {k : Bool}
+         → e →[ k ] e'
+         → e ⇒[ Bool→Nat k ] e'
+mred-red {k = false} e→e' = mred-z e→e' mred-refl
+mred-red {k = true} e→e' = mred-s mred-refl e→e' (next mred-refl)
+
+
+mred-trans : {e e' e'' : Γ ⊢ τ} {s t : Nat}
+           → e  ⇒[ s ] e'
+           → e' ⇒[ t ] e''
+           → e  ⇒[ s + t ] e''
+mred-trans mred-refl e'⇒e'' = e'⇒e''
+mred-trans {t = zero} (mred-z e→s s⇒e') e'⇒e''
+  = mred-z e→s (mred-trans s⇒e' e'⇒e'')
+mred-trans {t = suc t} (mred-z e→s s⇒e') (mred-s e'⇒e₀ e₀→e₁ ▹e₁⇒e'')
+  = mred-s (mred-trans (mred-z e→s s⇒e') e'⇒e₀) e₀→e₁ ▹e₁⇒e''
+mred-trans (mred-s e⇒e₀ e₀→e₁ ▹e₁⇒e') e'⇒e''
+  = mred-s e⇒e₀ e₀→e₁ (next mred-trans ⊛ ▹e₁⇒e' ⊛ next e'⇒e'')
+
+
+mred-ifz : {e e' : Γ ⊢ nat} {t₀ t₁ : Γ ⊢ τ} {k : Nat}
+         → e ⇒[ k ] e'
+         → ifz e then t₀ else t₁ ⇒[ k ] ifz e' then t₀ else t₁
+mred-ifz mred-refl = mred-refl
+mred-ifz (mred-z e→s s⇒e') = mred-z (red-ifz e→s) (mred-ifz s⇒e')
+mred-ifz (mred-s e⇒e₀ e₀→e₁ ▹e₁⇒e')
+  = mred-s (mred-ifz e⇒e₀) (red-ifz e₀→e₁) (next mred-ifz ⊛ ▹e₁⇒e')
+
+
+mred-pred : {e e' : Γ ⊢ nat} {k : Nat}
+          → e ⇒[ k ] e'
+          → pred e ⇒[ k ] pred e'
+mred-pred mred-refl = mred-refl
+mred-pred (mred-z e→s s⇒e') = mred-z (red-pred e→s) (mred-pred s⇒e')
+mred-pred (mred-s e⇒e₀ e₀→e₁ ▹e₁⇒e')
+  = mred-s (mred-pred e⇒e₀) (red-pred e₀→e₁) (next mred-pred ⊛ ▹e₁⇒e')
+
+mred-succ : {e e' : Γ ⊢ nat} {k : Nat}
+          → e ⇒[ k ] e'
+          → succ e ⇒[ k ] succ e'
+mred-succ mred-refl = mred-refl
+mred-succ (mred-z e→s s⇒e') = mred-z (red-succ e→s) (mred-succ s⇒e')
+mred-succ (mred-s e⇒e₀ e₀→e₁ ▹e₁⇒e')
+  = mred-s (mred-succ e⇒e₀) (red-succ e₀→e₁) (next mred-succ ⊛ ▹e₁⇒e')
+
 
 →-deterministic : {e e₁ e₂ : Γ ⊢ τ} {k : Bool}
                 → e →[ k ] e₁
