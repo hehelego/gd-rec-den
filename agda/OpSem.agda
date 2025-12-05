@@ -1,2 +1,2 @@
-open import OpSem.BigStep public
 open import OpSem.SmallStep public
+open import OpSem.SProperties public
