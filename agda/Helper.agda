@@ -1,6 +1,7 @@
 open import Agda.Builtin.Cubical.Path
 open import Agda.Builtin.Nat
 open import Agda.Builtin.Sigma
+open import Cubical.Foundations.Prelude using (_∙_; sym)
 
 
 infixr 5 _×_
@@ -31,6 +32,12 @@ cong₃ : ∀ {A B C D : Set} (f : A → B → C → D) → {x x' : A} {y y' : B
       → x ≡ x' → y ≡ y' → z ≡ z'
       → f x y z ≡ f x' y' z'
 cong₃ f eqx eqy eqz = λ i → f (eqx i) (eqy i) (eqz i)
+
+≡-confluent : ∀ {A : Set} {x y z : A}
+            → x ≡ y
+            → x ≡ z
+            → y ≡ z
+≡-confluent x=y y=z = sym x=y ∙ y=z
 
 nat-pred : Nat → Nat
 nat-pred zero = 0
