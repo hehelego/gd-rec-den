@@ -128,7 +128,7 @@ fundamental-lemma : (e : Γ ⊢ τ) (σ : Subst Γ ∅) (γ : ⟦ Γ ⟧c)
 fundamental-lemma (var Z) (t ∷ σ) (α ∷ γ) (pair t~α σ~γ) = t~α
 fundamental-lemma (var (S x)) (t ∷ σ) (α ∷ γ) (pair t~α σ~γ) = fundamental-lemma (var x) σ γ σ~γ
 fundamental-lemma (f ∙ t) σ γ σ~γ = (fundamental-lemma f σ γ σ~γ)(fundamental-lemma t σ γ σ~γ)
-fundamental-lemma (abs e) σ γ σ~γ {t} {α} t~α = proof
+fundamental-lemma {Γ = Γ} {τ = τ₁ ⇒ τ₂} (abs e) σ γ σ~γ {t} {α} t~α = proof
   where
     IH : LR ((t ∷ σ) ⟪ e ⟫ˢ) (⟦ e ⟧ (α ∷ γ))
     IH = fundamental-lemma e (t ∷ σ) (α ∷ γ) (pair t~α σ~γ)
@@ -136,10 +136,21 @@ fundamental-lemma (abs e) σ γ σ~γ {t} {α} t~α = proof
     red : σ ⟪ abs e ⟫ˢ ∙ t →[ false ] exts σ ⟪ e ⟫ˢ [ t ]
     red = red-beta
 
+    subst-var-eq : (τ : Type) (x : Γ , τ₁ ∋ τ) →
+      (t ∷ ((t ∷ ∅) ◆ suc-subst σ)) ⟨ x ⟩ˢ ≡ (t ∷ σ) ⟨ x ⟩ˢ
+    subst-var-eq τ Z = refl
+    subst-var-eq τ (S x) = sym (subst-outer-abs-suc-subst σ t  x)
+
     eq : exts σ ⟪ e ⟫ˢ [ t ] ≡ (t ∷ σ) ⟪ e ⟫ˢ
     eq =
-      exts σ ⟪ e ⟫ˢ [ t ] 
-          ≡⟨ {!   !} ⟩
+      exts σ ⟪ e ⟫ˢ [ t ]
+        ≡⟨⟩
+      (t ∷ idˢ _) ⟪ exts σ ⟪ e ⟫ˢ ⟫ˢ
+        ≡⟨ sym (subst-◆ (t ∷ idˢ _) (exts σ) e) ⟩
+      (t ∷ idˢ _) ◆ exts σ ⟪ e ⟫ˢ
+        ≡⟨ subst-ext-var ((t ∷ idˢ _) ◆ exts σ) (t ∷ σ) 
+                         subst-var-eq
+                         e ⟩
       (t ∷ σ) ⟪ e ⟫ˢ ∎
 
     red' : σ ⟪ abs e ⟫ˢ ∙ t →[ false ] (t ∷ σ) ⟪ e ⟫ˢ
