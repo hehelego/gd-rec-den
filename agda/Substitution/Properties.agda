@@ -326,3 +326,22 @@ suc-subst-≡ σ₁ σ₂ x p =
   ≡⟨ sym (suc-subst-⟨-⟩ˢ σ₂ x) ⟩
     suc-subst σ₂ ⟨ x ⟩ˢ
   ∎
+
+subst0-cancel-shift : (t : Γ ⊢ τ₁) (s : Γ ⊢ τ₂) → suc-renaming (idᴿ _) ⟪ t ⟫ [ s ] ≡ t
+subst0-cancel-shift {Γ = Γ} t s =
+  suc-renaming (idᴿ _) ⟪ t ⟫ [ s ]
+    ≡⟨ cong (λ t → suc-renaming (idᴿ _) ⟪ t ⟫ [ s ]) (sym (subst-id t)) ⟩
+  suc-renaming (idᴿ _) ⟪ idˢ _ ⟪ t ⟫ˢ ⟫ [ s ]
+    ≡⟨ cong (_[ s ]) (sym (suc-subst-⟪-⟫ˢ (idˢ _) t)) ⟩
+  suc-subst (idˢ _) ⟪ t ⟫ˢ [ s ]
+    ≡⟨⟩
+  substOuter s ⟪ suc-subst (idˢ _) ⟪ t ⟫ˢ ⟫ˢ
+    ≡⟨ sym (subst-◆ (substOuter s) (suc-subst (idˢ _)) t) ⟩
+  substOuter s ◆ suc-subst (idˢ _) ⟪ t ⟫ˢ
+    ≡⟨ subst-ext-var ((substOuter s) ◆ suc-subst (idˢ _))
+                     (idˢ _)
+                     (λ τ x → sym (subst-outer-abs-suc-subst (idˢ _) s x))
+                     t ⟩
+  idˢ _ ⟪ t ⟫ˢ
+    ≡⟨ subst-id t ⟩
+    t ∎
