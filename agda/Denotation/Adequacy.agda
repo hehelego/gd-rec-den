@@ -1,4 +1,4 @@
-open import Cubical.Foundations.Prelude hiding (Type; _,_; _∙_; cong; cong₂; cong₃)
+open import Cubical.Foundations.Prelude hiding (Type; _,_; _∙_; cong; cong₂; cong₃; lift)
 
 open import Agda.Builtin.Sigma renaming (_,_ to ⟨_,_⟩ₛ)
 open import Agda.Builtin.Unit
@@ -62,28 +62,25 @@ LR⊛ : {f : Γ ⊢ τ₁ ⇒ τ₂} {φ : ▹ ⟦ τ₁ ⇒ τ₂ ⟧t}
 LR⊛ f~φ t~α κ = f~φ κ (t~α κ)
 
 
-LR→[s]θ : (e e' : Γ ⊢ τ) → e →[ true ] e'
-        → (α : ▹ ⟦ τ ⟧t)
+LR→[s]θ : {e e' : Γ ⊢ τ} → e →[ true ] e'
+        → {α : ▹ ⟦ τ ⟧t}
         → ▹LR (next e') α
         → LR e (θ' α)
-LR→[s]θ {τ = nat} e e' e→e' α ▹R = LR-foldθ ⟨ pair e e' , pair mred-refl (pair e→e' ▹R) ⟩ₛ
-LR→[s]θ {τ = τ ⇒ σ} f f' f→f' φ next[f]▹~φ {t} {α} t~α = LR→[s]θ {τ = σ}
-                                                         (f ∙ t) (f' ∙ t) (red-app f→f')
-                                                         (φ ⊛ next α)
-                                                         (LR⊛ next[f]▹~φ (next t~α))
+LR→[s]θ {τ = nat} {e = e} {e' = e'} e→e' ▹R
+  = LR-foldθ ⟨ pair e e' , pair mred-refl (pair e→e' ▹R) ⟩ₛ
+LR→[s]θ {τ = τ ⇒ σ} f→f' {φ} next[f]▹~φ {t} {α} t~α
+  = LR→[s]θ {τ = σ} (red-app f→f') {φ ⊛ next α} (LR⊛ next[f]▹~φ (next t~α))
 
--- TODO: block on a lemma demonstrating that small-step is deterministic,
--- which enables one to drop the first step of a multi-step reduction
-LR→[z]LR : (e e' : Γ ⊢ τ) → e →[ false ] e'
-         → (α : ⟦ τ ⟧t)
+LR→[z]LR : {e e' : Γ ⊢ τ} → e →[ false ] e'
+         → {α : ⟦ τ ⟧t}
          → LR e  α
          → LR e' α
-LR→[z]LR {τ = nat} e e' e→e' (now n) e~α 
+LR→[z]LR {τ = nat} e→e' {now n} e~α 
   with LR-unfoldη e~α
 ... | mred-z e→e'' e''⇒n = let e''=e' = →-deterministic e→e'' e→e'
                                e'⇒n = subst (_⇒[ zero ] # n) e''=e' e''⇒n
                             in LR-foldη e'⇒n
-LR→[z]LR {τ = nat} e e' e→e' (future r) e~α
+LR→[z]LR {τ = nat} e→e' {future r} e~α
   with LR-unfoldθ e~α
 ... | ⟨ pair e₀ e₁ , pair e⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ
   with e⇒e₀
@@ -91,27 +88,35 @@ LR→[z]LR {τ = nat} e e' e→e' (future r) e~α
 ... | mred-z e→e'' e''⇒e₀ = let e''=e' = →-deterministic e→e'' e→e'
                                 e'⇒e₀ = subst (_⇒[ zero ] e₀) e''=e' e''⇒e₀
                              in LR-foldθ ⟨ pair e₀ e₁ , pair e'⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ
-LR→[z]LR {τ = τ ⇒ σ} f f' f→f' φ f~φ {t} {α} t~α = LR→[z]LR {τ = σ}
-                                                   (f ∙ t) (f' ∙ t) (red-app f→f')
-                                                   (φ α)
-                                                   (f~φ t~α)
+LR→[z]LR {τ = τ ⇒ σ} f→f' {φ} f~φ {t} {α} t~α
+  = LR→[z]LR {τ = σ} (red-app f→f') {φ α} (f~φ t~α)
 
 
-LR←[z]LR : (e e' : Γ ⊢ τ) → e →[ false ] e'
-         → (α : ⟦ τ ⟧t)
+LR←[z]LR : {e e' : Γ ⊢ τ} → e →[ false ] e'
+         → {α : ⟦ τ ⟧t}
          → LR e' α
          → LR e  α
-LR←[z]LR {τ = nat} e e' e→e' (now n) e'~α =
+LR←[z]LR {τ = nat} e→e' {now n} e'~α =
   let e'⇒n = LR-unfoldη e'~α
    in LR-foldη (mred-z e→e' e'⇒n)
-LR←[z]LR {τ = nat} e e' e→e' (future r) e'~α =
+LR←[z]LR {τ = nat} e→e' {future r} e'~α =
   let ⟨ pair e₀ e₁ , pair e'⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ = LR-unfoldθ e'~α
    in LR-foldθ ⟨ pair e₀ e₁ , pair (mred-z e→e' e'⇒e₀) (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ
-LR←[z]LR {τ = τ ⇒ σ} f f' f→f' φ f'~φ {t} {α} t~α = LR←[z]LR {τ = σ}
-                                                    (f ∙ t) (f' ∙ t) (red-app f→f')
-                                                    (φ α)
-                                                    (f'~φ t~α)
+LR←[z]LR {τ = τ ⇒ σ} f→f' {φ} f'~φ {t} {α} t~α
+  = LR←[z]LR {τ = σ} (red-app f→f') {φ α} (f'~φ t~α)
 
+
+LR⇐[z]LR : {e e' : Γ ⊢ τ} → e ⇒[ zero ] e'
+         → {α : ⟦ τ ⟧t}
+         → LR e' α
+         → LR e  α
+LR⇐[z]LR mred-refl e'~α = e'~α
+LR⇐[z]LR (mred-z e→e'' e''⇒e') e'~α = let e''~α = LR⇐[z]LR e''⇒e' e'~α
+                                       in LR←[z]LR e→e'' e''~α
+
+
+inspect : {A : Set} (a : A) → Σ A (a ≡_)
+inspect a = ⟨ a , refl ⟩ₛ
 
 LR-σ~γ : Subst Γ ∅ → ⟦ Γ ⟧c → Set
 LR-σ~γ ∅ ∅ = ⊤
@@ -128,20 +133,29 @@ fundamental-lemma (abs e) σ γ σ~γ {t} {α} t~α = proof
     IH : LR ((t ∷ σ) ⟪ e ⟫ˢ) (⟦ e ⟧ (α ∷ γ))
     IH = fundamental-lemma e (t ∷ σ) (α ∷ γ) (pair t~α σ~γ)
 
-    -- eq is probably incorrect. Need an alternative proof
-    -- counterexample: [e = # 0]
-    eq : (t ∷ σ) ⟪ e ⟫ˢ ≡ abs (exts σ ⟪ e ⟫ˢ) ∙ t
-    eq = {!   !}
+    red : σ ⟪ abs e ⟫ˢ ∙ t →[ false ] exts σ ⟪ e ⟫ˢ [ t ]
+    red = red-beta
+
+    eq : exts σ ⟪ e ⟫ˢ [ t ] ≡ (t ∷ σ) ⟪ e ⟫ˢ
+    eq =
+      exts σ ⟪ e ⟫ˢ [ t ] 
+          ≡⟨ {!   !} ⟩
+      (t ∷ σ) ⟪ e ⟫ˢ ∎
+
+    red' : σ ⟪ abs e ⟫ˢ ∙ t →[ false ] (t ∷ σ) ⟪ e ⟫ˢ
+    red' = subst (σ ⟪ abs e ⟫ˢ ∙ t →[ false ]_) eq red
 
     proof : LR (σ ⟪ abs e ⟫ˢ ∙ t) (⟦ e ⟧ (α ∷ γ))
-    proof = subst (λ t → LR t (⟦ e ⟧ (α ∷ γ))) eq IH
+    proof = LR←[z]LR red' IH
 fundamental-lemma (# n) σ γ σ~γ = LR-foldη mred-refl
-fundamental-lemma (pred e) σ γ σ~γ = {!  !}
+fundamental-lemma (pred e) σ γ σ~γ = {! e⇒v  !}
   where
     IH = fundamental-lemma e σ γ σ~γ
+    e⇒v = transport (gfix-unfold LR-body ≡$ σ ⟪ e ⟫ˢ ≡$ ⟦ e ⟧ γ) IH
 fundamental-lemma (succ e) σ γ σ~γ = {!  !}
   where
     IH = fundamental-lemma e σ γ σ~γ
+    e⇒v = transport (gfix-unfold LR-body ≡$ σ ⟪ e ⟫ˢ ≡$ ⟦ e ⟧ γ) IH
 fundamental-lemma {τ = τ} (ifz e then t₀ else t₁) σ γ σ~γ = proof
   where
     IHe = fundamental-lemma e σ γ σ~γ
@@ -150,17 +164,38 @@ fundamental-lemma {τ = τ} (ifz e then t₀ else t₁) σ γ σ~γ = proof
     N = suc-renaming (idᴿ _) ⟪ t₁ ⟫
     M-eq = suc-rename-idᴿ⟦ t₀ ⟧ γ (⟦ e ⟧ γ)
     N-eq = suc-rename-idᴿ⟦ t₁ ⟧ γ (⟦ e ⟧ γ)
+    M-eq' = cong (σ ⟪_⟫ˢ) (subst0-cancel-shift t₀ e)
+    N-eq' = cong (σ ⟪_⟫ˢ) (subst0-cancel-shift t₁ e)
 
-    red-⟪⟫ˢ : σ ⟪ (abs (ifz var Z then M else N)) ∙ e ⟫ˢ →[ false ] σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-    red-⟪⟫ˢ = {!   !} -- TODO: reduction under renaming/substitution    
+    red-⟪ifz⟫ˢ : σ ⟪ abs (ifz var Z then M else N) ∙ e ⟫ˢ
+      →[ false ] σ ⟪ ifz e then M [ e ] else N [ e ] ⟫ˢ
+    red-⟪ifz⟫ˢ = σ ⟪→ red-beta {f = ifz var Z then M else N} {t = e} ⟫ˢ
+
+    red-⟪⟫ˢ : σ ⟪ (abs (ifz var Z then M else N)) ∙ e ⟫ˢ
+      →[ false ] σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
+    red-⟪⟫ˢ = subst2 (λ m* n* → σ ⟪ (abs (ifz var Z then M else N)) ∙ e ⟫ˢ
+                      →[ false ] ifz σ ⟪ e ⟫ˢ then m* else n*)
+              M-eq' N-eq' red-⟪ifz⟫ˢ
 
     [ifz]-eq : map-ext ▹alg' (nat-ifz (⟦ M ⟧ (⟦ e ⟧ γ ∷ γ)) (⟦ N ⟧ (⟦ e ⟧ γ ∷ γ))) (⟦ e ⟧ γ)
              ≡ map-ext ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ)) (⟦ e ⟧ γ)
     [ifz]-eq = cong₂ (λ [0] [1] → map-ext ▹alg' (nat-ifz [0] [1])) M-eq N-eq ≡$ (⟦ e ⟧ γ)
 
+    abs-ifz-body : ▹ (LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ )
+                         (⟦ abs (ifz var Z then M else N) ⟧ γ))
+                 →    LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ )
+                         (⟦ abs (ifz var Z then M else N) ⟧ γ)
+    abs-ifz-body ▹IH {s} {now zero} s~α =
+      let e⇒z = LR-unfoldη s~α
+          ifz⇒M : abs (ifz var Z then exts σ ⟪ M ⟫ˢ else exts σ ⟪ N ⟫ˢ) ∙ s ⇒[ zero ] σ ⟪ t₀ ⟫ˢ
+          ifz⇒M = {!   !}
+       in {! LR-foldη  !}
+    abs-ifz-body ▹IH {s} {now (suc n)} s~α = {!   !}
+    abs-ifz-body ▹IH {s} {future r} s~α = {!   !}
+
     abs-ifz : LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ )
                  (⟦ abs (ifz var Z then M else N) ⟧ γ)
-    abs-ifz = {!   !}
+    abs-ifz = gfix abs-ifz-body
 
     t0 : LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ ∙ σ ⟪ e ⟫ˢ)
             (⟦ abs (ifz var Z then M else N) ⟧ γ (⟦ e ⟧ γ))
@@ -168,7 +203,7 @@ fundamental-lemma {τ = τ} (ifz e then t₀ else t₁) σ γ σ~γ = proof
 
     t1 : LR (σ ⟪ ifz e then t₀ else t₁ ⟫ˢ)
             (⟦ abs (ifz var Z then M else N) ⟧ γ (⟦ e ⟧ γ))
-    t1 = LR→[z]LR _ _  red-⟪⟫ˢ _ t0
+    t1 = LR→[z]LR red-⟪⟫ˢ t0
 
     proof : LR (σ ⟪ ifz e then t₀ else t₁ ⟫ˢ) (⟦ ifz e then t₀ else t₁ ⟧ γ)
     proof = subst (LR (σ ⟪ ifz e then t₀ else t₁ ⟫ˢ)) [ifz]-eq t1
@@ -178,7 +213,7 @@ fundamental-lemma (Y f) σ γ σ~γ = proof
     IHf = fundamental-lemma f σ γ σ~γ
     
     red-⟪⟫ˢ : σ ⟪ Y f ⟫ˢ →[ true ] σ ⟪ f ∙ (Y f) ⟫ˢ
-    red-⟪⟫ˢ = {!   !} -- TODO: reduction under renaming/substitution
+    red-⟪⟫ˢ = σ ⟪→ red-unfold {f = f} ⟫ˢ
 
     proof : LR (σ ⟪ Y f ⟫ˢ) (⟦ Y f ⟧ γ)
     proof = gfix λ { ▹IHYf →
@@ -187,7 +222,7 @@ fundamental-lemma (Y f) σ γ σ~γ = proof
             t1 : ▹LR (next (σ ⟪ f ∙ (Y f) ⟫ˢ)) (next (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
             t1 = t0
             t2 : LR (σ ⟪ Y f ⟫ˢ) (δ' (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
-            t2 = LR→[s]θ _ _ red-⟪⟫ˢ _ t1
+            t2 = LR→[s]θ red-⟪⟫ˢ t1
             t3 : LR (σ ⟪ Y f ⟫ˢ) ((⟦ Y f ⟧ γ))
             t3 = subst (LR (σ ⟪ Y f ⟫ˢ)) (sym (Y-delay f)) t2
         in  t3 }
