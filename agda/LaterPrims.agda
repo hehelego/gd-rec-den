@@ -25,9 +25,13 @@ next : A → ▹ A
 next x _ = x
 
 infixl 10 _⊛_
+infixl 10 _▹$_
 
 _⊛_ : ▹ (A → B) → ▹ A → ▹ B
 _⊛_ f x a = f a (x a)
+
+_▹$_ : (f : A → B) → ▹ A → ▹ B
+f ▹$ x = λ κ → f (x κ)
 
 postulate
   gfix : ∀ {l} {A : Set l} → (▹ A → A) → A

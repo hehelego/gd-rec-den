@@ -162,14 +162,62 @@ fundamental-lemma {Γ = Γ} {τ = τ₁ ⇒ τ₂} (abs e) σ γ σ~γ {t} {α} 
     proof : LR (σ ⟪ abs e ⟫ˢ ∙ t) (⟦ e ⟧ (α ∷ γ))
     proof = LR←[z]LR red' IH
 fundamental-lemma (# n) σ γ σ~γ = LR-foldη mred-refl
-fundamental-lemma (pred e) σ γ σ~γ = {!!}
+fundamental-lemma (pred e) σ γ σ~γ = proof
   where
-    IH = fundamental-lemma e σ γ σ~γ
-    e⇒v = transport (gfix-unfold LR-body ≡$ σ ⟪ e ⟫ˢ ≡$ ⟦ e ⟧ γ) IH
-fundamental-lemma (succ e) σ γ σ~γ = {!!}
+    pred-LR-body : ▹ ((e : ∅ ⊢ nat) (α : ⟦ nat ⟧t) (e~α : LR e α) → LR (pred e) (𝓛-map nat-pred α))
+                 →    (e : ∅ ⊢ nat) (α : ⟦ nat ⟧t) (e~α : LR e α) → LR (pred e) (𝓛-map nat-pred α)
+    pred-LR-body ▹IH e α@(now n) e~α
+      = let e⇒n = LR-unfoldη e~α
+            pred-e⇒sn = mred-trans (mred-pred e⇒n) (mred-red red-pred')
+         in LR-foldη pred-e⇒sn
+    pred-LR-body ▹IH e α@(future r) e~α
+      = let ⟨ pair e₀ e₁ , pair e⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ = LR-unfoldθ e~α
+            
+            LR0 : ▹LR (next (pred e₁)) (𝓛-map nat-pred ▹$ r)
+            LR0 κ = (▹IH κ) e₁ (r κ) (next[e₁]▹~r κ)
+
+            LR1 : LR (pred e₀) (𝓛-map nat-pred α)
+            LR1 = LR→[s]θ (red-pred e₀→e₁) LR0
+
+            LR2 : LR (pred e) (𝓛-map nat-pred α)
+            LR2 = LR⇐[z]LR (mred-pred e⇒e₀) LR1
+        in LR2
+
+    pred-LR : (e : ∅ ⊢ nat) (α : ⟦ nat ⟧t)
+            → LR e α
+            → LR (pred e) (𝓛-map nat-pred α)
+    pred-LR = gfix pred-LR-body
+
+    proof : LR (σ ⟪ pred e ⟫ˢ) (⟦ pred e ⟧ γ)
+    proof = pred-LR (σ ⟪ e ⟫ˢ) (⟦ e ⟧ γ) (fundamental-lemma e σ γ σ~γ)
+fundamental-lemma {Γ = Γ} (succ e) σ γ σ~γ = proof
   where
-    IH = fundamental-lemma e σ γ σ~γ
-    e⇒v = transport (gfix-unfold LR-body ≡$ σ ⟪ e ⟫ˢ ≡$ ⟦ e ⟧ γ) IH
+    succ-LR-body : ▹ ((e : ∅ ⊢ nat) (α : ⟦ nat ⟧t) (e~α : LR e α) → LR (succ e) (𝓛-map nat-succ α))
+                 →    (e : ∅ ⊢ nat) (α : ⟦ nat ⟧t) (e~α : LR e α) → LR (succ e) (𝓛-map nat-succ α)
+    succ-LR-body ▹IH e α@(now n) e~α
+      = let e⇒n = LR-unfoldη e~α
+            succ-e⇒sn = mred-trans (mred-succ e⇒n) (mred-red red-succ')
+         in LR-foldη succ-e⇒sn
+    succ-LR-body ▹IH e α@(future r) e~α
+      = let ⟨ pair e₀ e₁ , pair e⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ = LR-unfoldθ e~α
+            
+            LR0 : ▹LR (next (succ e₁)) (𝓛-map nat-succ ▹$ r)
+            LR0 κ = (▹IH κ) e₁ (r κ) (next[e₁]▹~r κ)
+
+            LR1 : LR (succ e₀) (𝓛-map nat-succ α)
+            LR1 = LR→[s]θ (red-succ e₀→e₁) LR0
+
+            LR2 : LR (succ e) (𝓛-map nat-succ α)
+            LR2 = LR⇐[z]LR (mred-succ e⇒e₀) LR1
+        in LR2
+
+    succ-LR : (e : ∅ ⊢ nat) (α : ⟦ nat ⟧t)
+            → LR e α
+            → LR (succ e) (𝓛-map nat-succ α)
+    succ-LR = gfix succ-LR-body
+
+    proof : LR (σ ⟪ succ e ⟫ˢ) (⟦ succ e ⟧ γ)
+    proof = succ-LR (σ ⟪ e ⟫ˢ) (⟦ e ⟧ γ) (fundamental-lemma e σ γ σ~γ)
 fundamental-lemma {Γ = Γ} (ifz e then t₀ else t₁) σ γ σ~γ = proof
   where
     IHe = fundamental-lemma e σ γ σ~γ
