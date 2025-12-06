@@ -144,8 +144,8 @@ fundamental-lemma {Γ = Γ} {τ = τ₁ ⇒ τ₂} (abs e) σ γ σ~γ {t} {α} 
     subst-var-eq τ Z = refl
     subst-var-eq τ (S x) = sym (subst-outer-abs-suc-subst σ t  x)
 
-    eq : exts σ ⟪ e ⟫ˢ [ t ] ≡ (t ∷ σ) ⟪ e ⟫ˢ
-    eq =
+    subst-eq : exts σ ⟪ e ⟫ˢ [ t ] ≡ (t ∷ σ) ⟪ e ⟫ˢ
+    subst-eq =
       exts σ ⟪ e ⟫ˢ [ t ]
         ≡⟨⟩
       (t ∷ idˢ _) ⟪ exts σ ⟪ e ⟫ˢ ⟫ˢ
@@ -156,11 +156,13 @@ fundamental-lemma {Γ = Γ} {τ = τ₁ ⇒ τ₂} (abs e) σ γ σ~γ {t} {α} 
                          e ⟩
       (t ∷ σ) ⟪ e ⟫ˢ ∎
 
-    red' : σ ⟪ abs e ⟫ˢ ∙ t →[ false ] (t ∷ σ) ⟪ e ⟫ˢ
-    red' = subst (σ ⟪ abs e ⟫ˢ ∙ t →[ false ]_) eq red
+    red-beta-⟪⟫ˢ : σ ⟪ abs e ⟫ˢ ∙ t →[ false ] (t ∷ σ) ⟪ e ⟫ˢ
+    red-beta-⟪⟫ˢ = subst (σ ⟪ abs e ⟫ˢ ∙ t →[ false ]_)
+                         subst-eq
+                         red
 
     proof : LR (σ ⟪ abs e ⟫ˢ ∙ t) (⟦ e ⟧ (α ∷ γ))
-    proof = LR←[z]LR red' IH
+    proof = LR←[z]LR red-beta-⟪⟫ˢ IH
 fundamental-lemma (# n) σ γ σ~γ = LR-foldη mred-refl
 fundamental-lemma (pred e) σ γ σ~γ = proof
   where
@@ -220,145 +222,61 @@ fundamental-lemma {Γ = Γ} (succ e) σ γ σ~γ = proof
     proof = succ-LR (σ ⟪ e ⟫ˢ) (⟦ e ⟧ γ) (fundamental-lemma e σ γ σ~γ)
 fundamental-lemma {Γ = Γ} (ifz e then t₀ else t₁) σ γ σ~γ = proof
   where
-    IHe = fundamental-lemma e σ γ σ~γ
-    IHt₀ = fundamental-lemma t₀ σ γ σ~γ
-    IHt₁ = fundamental-lemma t₁ σ γ σ~γ
+    LR-ifz : (t₀ t₁ : ∅ ⊢ τ) (α₀ α₁ : ⟦ τ ⟧t)
+           → (t₀~α₀ : LR t₀ α₀) (t₁~α₁ : LR t₁ α₁)
+           → (e : ∅ ⊢ nat) (β : ⟦ nat ⟧t) (e~β : LR e β)
+           → LR (ifz e then t₀ else t₁)
+                (map-ext ▹alg' (nat-ifz α₀ α₁) β)
+    LR-ifz t₀ t₁ α₀ α₁ t₀~α₀ t₁~α₁ = gfix λ 
+        { ▹IH e (now zero) e~β →
+          let e⇒v = LR-unfoldη e~β
+              
+              LR1 : LR (ifz # zero then t₀ else t₁) α₀
+              LR1 = LR←[z]LR red-ifz-z t₀~α₀
+              
+              LR2 : LR (ifz e then t₀ else t₁) α₀
+              LR2 = LR⇐[z]LR (mred-ifz e⇒v) LR1
 
-    M = suc-renaming (idᴿ _) ⟪ t₀ ⟫
-    N = suc-renaming (idᴿ _) ⟪ t₁ ⟫
+              sem-eq : α₀ ≡ map-ext ▹alg' (nat-ifz α₀ α₁) (now zero)
+              sem-eq = sym (gfix-unfold _ ≡$ now zero)
+              in subst (LR (ifz e then t₀ else t₁)) sem-eq LR2
+        ; ▹IH e (now (suc n)) e~β → 
+          let e⇒v = LR-unfoldη e~β
 
-    ⟦M⟧=⟦t₀⟧ : {e : Γ ⊢ nat} → ⟦ M ⟧ (⟦ e ⟧ γ ∷ γ) ≡ ⟦ t₀ ⟧ γ
-    ⟦M⟧=⟦t₀⟧ {e} = suc-rename-idᴿ⟦ t₀ ⟧ γ (⟦ e ⟧ γ)
-    ⟦N⟧=⟦t₁⟧ : {e : Γ ⊢ nat} → ⟦ N ⟧ (⟦ e ⟧ γ ∷ γ) ≡ ⟦ t₁ ⟧ γ
-    ⟦N⟧=⟦t₁⟧ {e} = suc-rename-idᴿ⟦ t₁ ⟧ γ (⟦ e ⟧ γ)
+              LR1 : LR (ifz # (suc n) then t₀ else t₁) α₁
+              LR1 = LR←[z]LR red-ifz-s t₁~α₁
 
-    M[s]=t₀ : {s : ∅ ⊢ nat} → exts σ ⟪ M ⟫ˢ [ s ] ≡ σ ⟪ t₀ ⟫ˢ
-    M[s]=t₀ {s} =
-      exts σ ⟪ M ⟫ˢ [ s ]
-        ≡⟨⟩
-      exts σ ⟪ suc-renaming (idᴿ _) ⟪ t₀ ⟫ ⟫ˢ [ s ]
-        ≡⟨ cong (_[ s ]) (sym (ren⟪σ⟪t⟫ˢ⟫≡σ⟪ren⟪t⟫⟫ˢ σ t₀)) ⟩
-      suc-renaming (idᴿ ∅) ⟪ σ ⟪ t₀ ⟫ˢ ⟫ [ s ]
-        ≡⟨ subst0-cancel-shift (σ ⟪ t₀ ⟫ˢ) s ⟩
-      σ ⟪ t₀ ⟫ˢ ∎
+              LR2 : LR (ifz e then t₀ else t₁) α₁
+              LR2 = LR⇐[z]LR (mred-ifz e⇒v) LR1
 
-    N[s]=t₁ : {s : ∅ ⊢ nat} → exts σ ⟪ N ⟫ˢ [ s ] ≡ σ ⟪ t₁ ⟫ˢ
-    N[s]=t₁ {s} =
-      exts σ ⟪ N ⟫ˢ [ s ]
-        ≡⟨⟩
-      exts σ ⟪ suc-renaming (idᴿ _) ⟪ t₁ ⟫ ⟫ˢ [ s ]
-        ≡⟨ cong (_[ s ]) (sym (ren⟪σ⟪t⟫ˢ⟫≡σ⟪ren⟪t⟫⟫ˢ σ t₁)) ⟩
-      suc-renaming (idᴿ ∅) ⟪ σ ⟪ t₁ ⟫ˢ ⟫ [ s ]
-        ≡⟨ subst0-cancel-shift (σ ⟪ t₁ ⟫ˢ) s ⟩
-      σ ⟪ t₁ ⟫ˢ ∎
+              sem-eq : α₁ ≡ map-ext ▹alg' (nat-ifz α₀ α₁) (now (suc n))
+              sem-eq = sym (gfix-unfold _ ≡$ now (suc n))
+           in subst (LR (ifz e then t₀ else t₁)) sem-eq LR2
+        ; ▹IH e β@(future r) e~β →
+          let ⟨ pair e₀ e₁ , pair e⇒e₀ (pair e₀→e₁ next[e₁]▹~r) ⟩ₛ = LR-unfoldθ e~β
 
+              LR1 : ▹LR (next (ifz e₁ then t₀ else t₁))
+                        (map-ext ▹alg' (nat-ifz α₀ α₁) ▹$ r)
+              LR1 = λ κ → (▹IH κ) e₁ (r κ) (next[e₁]▹~r κ) 
 
-    red-⟪ifz⟫ˢ : σ ⟪ abs (ifz var Z then M else N) ∙ e ⟫ˢ
-      →[ false ] σ ⟪ ifz e then M [ e ] else N [ e ] ⟫ˢ
-    red-⟪ifz⟫ˢ = σ ⟪→ red-beta {f = ifz var Z then M else N} {t = e} ⟫ˢ
+              LR2 : LR (ifz e₀ then t₀ else t₁)
+                       (θ' (map-ext ▹alg' (nat-ifz α₀ α₁) ▹$ r))
+              LR2 = LR→[s]θ (red-ifz e₀→e₁) LR1
 
-    red-⟪⟫ˢ : σ ⟪ (abs (ifz var Z then M else N)) ∙ e ⟫ˢ
-      →[ false ] σ ⟪ ifz e then t₀ else t₁ ⟫ˢ
-    red-⟪⟫ˢ = subst2 (λ m* n* → σ ⟪ (abs (ifz var Z then M else N)) ∙ e ⟫ˢ
-                      →[ false ] ifz σ ⟪ e ⟫ˢ then m* else n*)
-              (cong (σ ⟪_⟫ˢ) (subst0-cancel-shift t₀ e))
-              (cong (σ ⟪_⟫ˢ) (subst0-cancel-shift t₁ e))
-              red-⟪ifz⟫ˢ
+              LR3 : LR (ifz e then t₀ else t₁)
+                       (θ' (map-ext ▹alg' (nat-ifz α₀ α₁) ▹$ r))
+              LR3 = LR⇐[z]LR (mred-ifz e⇒e₀) LR2
 
-    [ifz]-eq : map-ext ▹alg' (nat-ifz (⟦ M ⟧ (⟦ e ⟧ γ ∷ γ)) (⟦ N ⟧ (⟦ e ⟧ γ ∷ γ))) (⟦ e ⟧ γ)
-             ≡ map-ext ▹alg' (nat-ifz (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ)) (⟦ e ⟧ γ)
-    [ifz]-eq = cong₂ (λ [0] [1] → map-ext ▹alg' (nat-ifz [0] [1]) (⟦ e ⟧ γ)) (⟦M⟧=⟦t₀⟧ {e}) (⟦N⟧=⟦t₁⟧ {e})
-
-
-    abs-ifz-body : ▹ (LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ )
-                         (⟦ abs (ifz var Z then M else N) ⟧ γ))
-                 →    LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ )
-                         (⟦ abs (ifz var Z then M else N) ⟧ γ)
-    abs-ifz-body ▹IH {s} v@{now zero} s~α =
-      let s⇒v = LR-unfoldη s~α
-          ifs⇒ifv⇒M = mred-trans (mred-z red-beta (mred-ifz s⇒v)) (mred-red red-ifz-z)
-          ifs⇒ifv⇒t₀ = subst (abs (ifz var Z then exts σ ⟪ M ⟫ˢ else exts σ ⟪ N ⟫ˢ) ∙ s ⇒[ zero ]_) M[s]=t₀ ifs⇒ifv⇒M
-          LR-gfix = LR⇐[z]LR ifs⇒ifv⇒t₀ IHt₀
-
-          sem-eq : map-ext ▹alg' (nat-ifz (⟦ M ⟧ (v ∷ γ)) (⟦ N ⟧ (v ∷ γ))) v ≡ ⟦ t₀ ⟧ γ
-          sem-eq =
-            map-ext ▹alg' (nat-ifz (⟦ M ⟧ (v ∷ γ)) (⟦ N ⟧ (v ∷ γ))) v
-              ≡⟨ gfix-unfold _ ≡$ v ⟩
-            ⟦ M ⟧ (v ∷ γ)
-              ≡⟨ ⟦M⟧=⟦t₀⟧ {e = # zero} ⟩
-            ⟦ t₀ ⟧ γ ∎
-
-       in subst (LR (abs (ifz var Z then exts σ ⟪ M ⟫ˢ else exts σ ⟪ N ⟫ˢ) ∙ s)) (sym sem-eq) LR-gfix
-    abs-ifz-body ▹IH {s} v@{now (suc n)} s~α =
-      let s⇒v = LR-unfoldη s~α
-          ifs⇒ifv⇒N = mred-trans (mred-z red-beta (mred-ifz s⇒v)) (mred-red red-ifz-s)
-          ifs⇒ifv⇒t₁ = subst (abs (ifz var Z then exts σ ⟪ M ⟫ˢ else exts σ ⟪ N ⟫ˢ) ∙ s ⇒[ zero ]_) N[s]=t₁ ifs⇒ifv⇒N
-          LR-gfix = LR⇐[z]LR ifs⇒ifv⇒t₁ IHt₁
-
-          sem-eq : map-ext ▹alg' (nat-ifz (⟦ M ⟧ (v ∷ γ)) (⟦ N ⟧ (now (suc n) ∷ γ))) (now (suc n)) ≡ ⟦ t₁ ⟧ γ
-          sem-eq =
-            map-ext ▹alg' (nat-ifz (⟦ M ⟧ (v ∷ γ)) (⟦ N ⟧ (v ∷ γ))) v
-              ≡⟨ gfix-unfold _ ≡$ v ⟩
-            ⟦ N ⟧ (now (suc n) ∷ γ)
-              ≡⟨ ⟦N⟧=⟦t₁⟧ {e = # (suc n)} ⟩
-            ⟦ t₁ ⟧ γ ∎
-
-       in subst (LR (abs (ifz var Z then exts σ ⟪ M ⟫ˢ else exts σ ⟪ N ⟫ˢ) ∙ s)) (sym sem-eq) LR-gfix
-    abs-ifz-body ▹IH {s} α@{future r} s~α =
-      let ⟨ pair s₀ s₁ , pair s⇒s₀ (pair s₀→s₁ next[s₁]▹~r) ⟩ₛ = LR-unfoldθ s~α
-
-          LR0 : ▹LR (next (abs (exts σ ⟪ ifz var Z then M else N ⟫ˢ) ∙ s₁))
-                    (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r)
-          LR0 = LR⊛ ▹IH next[s₁]▹~r
-
-          LR1 : ▹LR (next (ifz s₁ then (exts σ ⟪ M ⟫ˢ [ s₁ ]) else (exts σ ⟪ N ⟫ˢ [ s₁ ])))
-                    (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r)
-          LR1 = ▹LR→[z]LR red-beta LR0
-
-          LR2 : LR (ifz s₀ then exts σ ⟪ M ⟫ˢ [ s₁ ] else exts σ ⟪ N ⟫ˢ [ s₁ ])
-                   (θ' (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r))
-          LR2 = LR→[s]θ (red-ifz s₀→s₁) LR1
-
-          LR3 : LR (ifz s then exts σ ⟪ M ⟫ˢ [ s₁ ] else exts σ ⟪ N ⟫ˢ [ s₁ ])
-                   (θ' (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r))
-          LR3 = LR⇐[z]LR (mred-ifz s⇒s₀) LR2
-
-
-          LR3' : LR (ifz s then exts σ ⟪ M ⟫ˢ [ s ] else exts σ ⟪ N ⟫ˢ [ s ])
-                    (θ' (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r))
-          LR3' = subst2 (λ [0] [1] → 
-                  LR (ifz s then [0] else [1])
-                     (θ' (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r)))
-                     (≡-confluent (sym M[s]=t₀) (sym M[s]=t₀))
-                     (≡-confluent (sym N[s]=t₁) (sym N[s]=t₁))
-                     LR3
-
-          LR4 : LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ ∙ s)
-                   (θ' (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r))
-          LR4 = LR←[z]LR red-beta LR3'
-
-          sem-eq : θ' (next (⟦ abs (ifz var Z then M else N) ⟧ γ) ⊛ r)
-                 ≡ ⟦ abs (ifz var Z then M else N) ⟧ γ (future r)
-          sem-eq = sym (ifz-abs-future t₀ t₁ r)
-          
-       in subst (LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ ∙ s))
-                sem-eq
-                LR4
-
-    LR-abs-ifz : LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ )
-                    (⟦ abs (ifz var Z then M else N) ⟧ γ)
-    LR-abs-ifz = gfix abs-ifz-body
-
-    LR-abs-ifz-app : LR (σ ⟪ abs (ifz var Z then M else N) ⟫ˢ ∙ σ ⟪ e ⟫ˢ)
-                        (⟦ abs (ifz var Z then M else N) ⟧ γ (⟦ e ⟧ γ))
-    LR-abs-ifz-app = LR-abs-ifz IHe
-
-    LR-ifz-weaken : LR (σ ⟪ ifz e then t₀ else t₁ ⟫ˢ)
-                       (⟦ abs (ifz var Z then M else N) ⟧ γ (⟦ e ⟧ γ))
-    LR-ifz-weaken = LR→[z]LR red-⟪⟫ˢ LR-abs-ifz-app
+              sem-eq : θ' (map-ext ▹alg' (nat-ifz α₀ α₁) ▹$ r)
+                     ≡ map-ext ▹alg' (nat-ifz α₀ α₁) β
+              sem-eq = sym (gfix-unfold _) ≡$ β
+           in subst (LR (ifz e then t₀ else t₁)) sem-eq LR3 }
 
     proof : LR (σ ⟪ ifz e then t₀ else t₁ ⟫ˢ) (⟦ ifz e then t₀ else t₁ ⟧ γ)
-    proof = subst (LR (σ ⟪ ifz e then t₀ else t₁ ⟫ˢ)) [ifz]-eq LR-ifz-weaken
+    proof = LR-ifz (σ ⟪ t₀ ⟫ˢ) (σ ⟪ t₁ ⟫ˢ) (⟦ t₀ ⟧ γ) (⟦ t₁ ⟧ γ)
+                   (fundamental-lemma t₀ σ γ σ~γ)
+                   (fundamental-lemma t₁ σ γ σ~γ)
+                   (σ ⟪ e ⟫ˢ) (⟦ e ⟧ γ) (fundamental-lemma e σ γ σ~γ)
 
 fundamental-lemma (Y f) σ γ σ~γ = proof
   where
@@ -369,15 +287,18 @@ fundamental-lemma (Y f) σ γ σ~γ = proof
 
     proof : LR (σ ⟪ Y f ⟫ˢ) (⟦ Y f ⟧ γ)
     proof = gfix λ { ▹IHYf →
-        let t0 : ▹ (LR (σ ⟪ f ∙ (Y f) ⟫ˢ) (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
-            t0 = (next IHf) ⊛  ▹IHYf
-            t1 : ▹LR (next (σ ⟪ f ∙ (Y f) ⟫ˢ)) (next (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
-            t1 = t0
-            t2 : LR (σ ⟪ Y f ⟫ˢ) (δ' (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
-            t2 = LR→[s]θ red-⟪⟫ˢ t1
-            t3 : LR (σ ⟪ Y f ⟫ˢ) ((⟦ Y f ⟧ γ))
-            t3 = subst (LR (σ ⟪ Y f ⟫ˢ)) (sym (Y-delay f)) t2
-        in  t3 }
+        let LR1 : ▹LR (next (σ ⟪ f ∙ (Y f) ⟫ˢ))
+                      (next (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
+            LR1 = (next IHf) ⊛ ▹IHYf
+            
+            LR2 : LR (σ ⟪ Y f ⟫ˢ)
+                     (δ' (⟦ f ⟧ γ (⟦ Y f ⟧ γ)))
+            LR2 = LR→[s]θ red-⟪⟫ˢ LR1
+
+            sem-eq : δ' (⟦ f ⟧ γ (⟦ Y f ⟧ γ)) ≡ ⟦ Y f ⟧ γ
+            sem-eq = sym (Y-delay f)
+
+          in subst (LR (σ ⟪ Y f ⟫ˢ)) sem-eq LR2 }
 
 
 adequacy' : (e : ∅ ⊢ nat) {n : Nat} (k : Nat)
